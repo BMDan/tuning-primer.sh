@@ -28,12 +28,12 @@ Innodb Status
 ### Recent Changes
 
 * Correct awk display error which formats integers > 4294967296 in scientific notation. 
-** Was manfest in `MEMORY USAGE` section where total system RAM > 4GB.
+ * Was manfest in `MEMORY USAGE` section where total system RAM > 4GB.
 * Fixed rounding error where mysql will lose 4K from the `join_buffer_size` value. 
-** Other values may have the same issue but are not yet reported
+ * Other values may have the same issue but are not yet reported
 * Added support for FreeBSD and MacOS (thanks Sam and Geert)
 * Added support for Solaris
 * Changed how system memory is derived on Linux. 
-** Use `/proc/meminfo` vs `free -b` and avoid inclusion of swap space.
+ * Use `/proc/meminfo` vs `free -b` and avoid inclusion of swap space.
 * Include note warning of instability when `key_buffer_size` > 4GB in versions 5.0.51 and lower
 * Bugfix to correct InnoDB support detection in 5.5/5.6
