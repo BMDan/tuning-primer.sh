@@ -341,8 +341,8 @@ mysql_variable () {
   export "$2"=$variable
 }
 mysql_variableTSV () {
-        local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk -F \t '{ print $2 }')
-        export "$2"=$variable
+  local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk -F '\t' '{ print $2 }')
+  export "$2"=$variable
 }
 
 float2int () {
