@@ -426,26 +426,20 @@ human_readable () {
         # let "$2"=$HR
 }
 
-human_readable_time () {
+function human_readable_time()
+{
+  # Produce human readable time from a duration in seconds.
 
-########################################################################
-#                                                                      #
-#       Function to produce human readable time                        #
-#                                                                      #
-########################################################################
+  # Remove and save any fractional component
+  local secs="${1%.*}"
+  local subsecs="${1#$secs}"
 
-        usage="$0 seconds 'variable'"
-        if [ -z $1 ] || [ -z $2 ] ; then
-                cecho $usage red
-                exit 1
-        fi
-        days=$(echo "scale=0 ; $1 / 86400" | bc -l)
-        remainder=$(echo "scale=0 ; $1 % 86400" | bc -l)
-        hours=$(echo "scale=0 ; $remainder / 3600" | bc -l)
-        remainder=$(echo "scale=0 ; $remainder % 3600" | bc -l)
-        minutes=$(echo "scale=0 ; $remainder / 60" | bc -l)
-        seconds=$(echo "scale=0 ; $remainder % 60" | bc -l)
-        export $2="$days days $hours hrs $minutes min $seconds sec"
+  if [ -z $1 ] || [ -z $2 ] ; then
+    cecho "${FUNCNAME[0]} seconds 'variable'" red
+    exit 1
+  fi
+
+  export $2="$((secs/86400)) days $((secs/3600%24)) hrs $((secs/60%60)) min $((secs%60))$subsecs sec"
 }
 
 check_mysql_version () {
