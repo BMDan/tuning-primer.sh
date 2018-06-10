@@ -30,6 +30,6 @@ Innodb Status
 * Updated to (at least mostly) support MySQL 5.7+ and MariaDB
 * A lot of cleanup of the underlying code
 * Better handling of terminals and redirection (got rid of the hardcoded color sequences, switched to proper terminfo)
-* Fixed the old ``./tuning-primer.sh: line 402: export: `2097152': not a valid identifier`` bug (https://github.com/BMDan/tuning-primer.sh/commit/6b5d866f7525b250bb4ecb0deffd66531e375143)
+* <a href="https://github.com/BMDan/tuning-primer.sh/commit/6b5d866f7525b250bb4ecb0deffd66531e375143">Fixed</a> the old ``./tuning-primer.sh: line 402: export: `2097152': not a valid identifier`` bug
 
 More, as always, in the <a href="https://github.com/BMDan/tuning-primer.sh/commits/master">changelog</a>.
