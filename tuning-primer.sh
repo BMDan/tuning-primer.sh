@@ -111,46 +111,47 @@ return
 }
 
 
-print_banner () {
-
-## -- Banner -- ##
-
-cecho " -- MYSQL PERFORMANCE TUNING PRIMER --" boldblue
-cecho "      - By: Matthew Montgomery -" black
-
+function print_banner()
+{
+  cecho " -- MYSQL PERFORMANCE TUNING PRIMER --" boldblue
+  cecho "      - By: Matthew Montgomery -" black
 }
 
 ## -- Find the location of the mysql.sock file -- ##
+function check_for_socket()
+{
+  if [ -z "$socket" ] ; then
+    # Use ~/my.cnf version
+    if [ -f ~/.my.cnf ] ; then
+      # Use the last one we find in the file.  We could be smarter here and
+      # parse section headers and so forth, but meh.
+      cnf_socket="$(awk -F '=' '$1 == "socket" { s=$2 } END { print s }' ~/my.cnf)"
+    fi
 
-check_for_socket () {
-        if [ -z "$socket" ] ; then
-                # Use ~/my.cnf version
-                if [ -f ~/.my.cnf ] ; then
-                        cnf_socket=$(grep ^socket ~/.my.cnf | awk -F \= '{ print $2 }' | head -1)
-                fi
-                if [ -S "$cnf_socket" ] ; then
-                        socket=$cnf_socket
-                elif [ -S /var/lib/mysql/mysql.sock ] ; then
-                        socket=/var/lib/mysql/mysql.sock
-                elif [ -S /var/run/mysqld/mysqld.sock ] ; then
-                        socket=/var/run/mysqld/mysqld.sock
-                elif [ -S /tmp/mysql.sock ] ; then
-                        socket=/tmp/mysql.sock
-                else
-                        if [ -S "$ps_socket" ] ; then
-                        socket=$ps_socket
-                        fi
-                fi
-        fi
-        if [ -S "$socket" ] ; then
-                echo UP > /dev/null
-        else
-                cecho "No valid socket file \"$socket\" found!" boldred
-                cecho "The mysqld process is not running or it is installed in a custom location." red
-                cecho "If you are sure mysqld is running, execute script in \"prompt\" mode or set " red
-                cecho "the socket= variable at the top of this script" red
-                exit 1
-        fi
+    if [ -S "$cnf_socket" ] ; then
+      socket=$cnf_socket
+    elif [ -S /var/lib/mysql/mysql.sock ] ; then
+      socket=/var/lib/mysql/mysql.sock
+    elif [ -S /var/run/mysqld/mysqld.sock ] ; then
+      socket=/var/run/mysqld/mysqld.sock
+    elif [ -S /tmp/mysql.sock ] ; then
+      socket=/tmp/mysql.sock
+    else
+      if [ -S "$ps_socket" ] ; then
+      socket=$ps_socket
+      fi
+    fi
+  fi
+
+  if [ -S "$socket" ] ; then
+    echo UP > /dev/null
+  else
+    cecho "No valid socket file \"$socket\" found!" boldred
+    cecho "The mysqld process is not running or it is installed in a custom location." red
+    cecho "If you are sure mysqld is running, execute script in \"prompt\" mode or set " red
+    cecho "the socket= variable at the top of this script" red
+    exit 1
+  fi
 }
 
 
