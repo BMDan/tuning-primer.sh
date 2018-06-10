@@ -80,11 +80,11 @@ function colorize() {
 
 function cecho()
 {
-  if [ -z "$1" ]; then
-    cecho "No message passed.\n" "$2"
+  if [ -z "${1-}" ]; then
+    cecho "No message passed.\n" "${2-}"
     return $?
   fi
-  cechon "$1"$'\n' "$2"
+  cechon "$1"$'\n' "${2-}"
   return $?
 }
 
@@ -205,80 +205,79 @@ final_login_attempt () {
         fi
 }
 
-second_login_failed () {
-
 ## -- create a ~/.my.cnf and exit when all else fails -- ##
-
-        cecho "Could not auto detect login info!"
-        cecho "Found potential sockets: $found_socks"
-        cecho "Using: $socket" red
-        read -p "Would you like to provide a different socket?: [y/N] " REPLY
-                case $REPLY in 
-                        yes | y | Y | YES)
-                        read -p "Socket: " socket
-                        ;;
-                esac
-        read -p "Do you have your login handy ? [y/N] : " REPLY
-        case $REPLY in 
-                yes | y | Y | YES)
-                answer1='yes'
-                read -p "User: " user
-                read -rp "Password: " pass
-                if [ -z $pass ] ; then
-                export mysql="$mysql -S$socket -u$user"
-                export mysqladmin="$mysqladmin -S$socket -u$user"
-                else
-                export mysql="$mysql -S$socket -u$user -p$pass"
-                export mysqladmin="$mysqladmin -S$socket -u$user -p$pass"
-                fi
-                ;;
-                *)
-                cecho "Please create a valid login to MySQL"
-                cecho "Or, set correct values for  'user=' and 'password=' in ~/.my.cnf"
-                ;;
-        esac
-        cecho " "
-        read -p "Would you like me to create a ~/.my.cnf file for you? [y/N] : " REPLY
-        case $REPLY in
-                yes | y | Y | YES)
-                answer2='yes'
-                if [ ! -f ~/.my.cnf ] ; then
-                        umask 077
-                        printf "[client]\nuser=$user\npassword=$pass\nsocket=$socket" > ~/.my.cnf
-                        if [ "$answer1" != 'yes' ] ; then
-                                exit 1
-                        else
-                                final_login_attempt
-                                return 0
-                        fi
-                else
-                        printf "\n"
-                        cecho "~/.my.cnf already exists!" boldred
-                        printf "\n"
-                        read -p "Replace ? [y/N] : " REPLY
-                        if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ] ; then 
-                        printf "[client]\nuser=$user\npassword=$pass\socket=$socket" > ~/.my.cnf
-                                if [ "$answer1" != 'yes' ] ; then
-                                        exit 1
-                                else
-                                        final_login_attempt
-                                        return 0
-                                fi
-                        else
-                                cecho "Please set the 'user=' and 'password=' and 'socket=' values in ~/.my.cnf"
-                                exit 1
-                        fi
-                fi
-                ;;
-                *)
-                if [ "$answer1" != 'yes' ] ; then
-                        exit 1
-                else
-                        final_login_attempt
-                        return 0
-                fi
-                ;;
-        esac
+function second_login_failed()
+{
+  cecho "Could not auto detect login info!"
+  cecho "Found potential sockets: $found_socks"
+  cecho "Using: $socket" red
+  read -p "Would you like to provide a different socket?: [y/N] " REPLY
+    case $REPLY in 
+      yes | y | Y | YES)
+      read -p "Socket: " socket
+      ;;
+    esac
+  read -p "Do you have your login handy ? [y/N] : " REPLY
+  case $REPLY in 
+    yes | y | Y | YES)
+    answer1='yes'
+    read -p "User: " user
+    read -rp "Password: " pass
+    if [ -z $pass ] ; then
+    export mysql="$mysql -S$socket -u$user"
+    export mysqladmin="$mysqladmin -S$socket -u$user"
+    else
+    export mysql="$mysql -S$socket -u$user -p$pass"
+    export mysqladmin="$mysqladmin -S$socket -u$user -p$pass"
+    fi
+    ;;
+    *)
+    cecho "Please create a valid login to MySQL"
+    cecho "Or, set correct values for  'user=' and 'password=' in ~/.my.cnf"
+    ;;
+  esac
+  cecho " "
+  read -p "Would you like me to create a ~/.my.cnf file for you? [y/N] : " REPLY
+  case $REPLY in
+    yes | y | Y | YES)
+    answer2='yes'
+    if [ ! -f ~/.my.cnf ] ; then
+      umask 077
+      printf "[client]\nuser=$user\npassword=$pass\nsocket=$socket" > ~/.my.cnf
+      if [ "$answer1" != 'yes' ] ; then
+        exit 1
+      else
+        final_login_attempt
+        return 0
+      fi
+    else
+      printf "\n"
+      cecho "~/.my.cnf already exists!" boldred
+      printf "\n"
+      read -p "Replace ? [y/N] : " REPLY
+      if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ] ; then 
+      printf "[client]\nuser=$user\npassword=$pass\socket=$socket" > ~/.my.cnf
+        if [ "$answer1" != 'yes' ] ; then
+          exit 1
+        else
+          final_login_attempt
+          return 0
+        fi
+      else
+        cecho "Please set the 'user=' and 'password=' and 'socket=' values in ~/.my.cnf"
+        exit 1
+      fi
+    fi
+    ;;
+    *)
+    if [ "$answer1" != 'yes' ] ; then
+      exit 1
+    else
+      final_login_attempt
+      return 0
+    fi
+    ;;
+  esac
 }
 
 find_webmin_passwords () {
