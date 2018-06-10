@@ -350,40 +350,39 @@ float2int () {
         export "$2"=$variable
 }
 
-divide () {
-
-# -- Divide two intigers -- #
-
-        usage="$0 dividend divisor '$variable' scale"
-        if [ $1 -ge 1 ] ; then
-                dividend=$1
-        else
-                cecho "Invalid Dividend" red
-                echo $usage
-                exit 1
-        fi
-        if [ $2 -ge 1 ] ; then
-                divisor=$2
-        else
-                cecho "Invalid Divisor" red
-                echo $usage
-                exit 1
-        fi
-        if [ ! -n $3 ] ; then
-                cecho "Invalid variable name" red
-                echo $usage
-                exit 1
-        fi
-        if [ -z $4 ] ; then
-                scale=2
-        elif [ $4 -ge 0 ] ; then
-                scale=$4
-        else
-                cecho "Invalid scale" red
-                echo $usage
-                exit 1
-        fi
-        export $3=$(echo "scale=$scale; $dividend / $divisor" | bc -l)
+# -- Divide two integers -- #
+function divide()
+{
+  usage="$0 dividend divisor '$variable' scale"
+  if [ $1 -ge 1 ] ; then
+    dividend=$1
+  else
+    cecho "Invalid Dividend" red
+    echo "$usage"
+    exit 1
+  fi
+  if [ $2 -ge 1 ] ; then
+    divisor=$2
+  else
+    cecho "Invalid Divisor" red
+    echo "$usage"
+    exit 1
+  fi
+  if [ ! -n $3 ] ; then
+    cecho "Invalid variable name" red
+    echo "$usage"
+    exit 1
+  fi
+  if [ -z $4 ] ; then
+    scale=2
+  elif [ $4 -ge 0 ] ; then
+    scale=$4
+  else
+    cecho "Invalid scale" red
+    echo "$usage"
+    exit 1
+  fi
+  export $3=$(echo "scale=$scale; $dividend / $divisor" | bc -l)
 }
 
 human_readable () {
