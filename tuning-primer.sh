@@ -1178,97 +1178,106 @@ check_table_scans () {
 
 check_innodb_status () {
 
-## -- InnoDB -- ##
+  ## See http://bugs.mysql.com/59393
 
-        ## See http://bugs.mysql.com/59393
+  if [ "$mysql_version_num" -lt 050603 ] ; then
+    mysql_variable \'have_innodb\' have_innodb
+  fi
 
-        if [ "$mysql_version_num" -lt 050603 ] ; then
-        mysql_variable \'have_innodb\' have_innodb
-        fi
-        if [ "$mysql_version_num" -lt 050500 ] && [ "$have_innodb" = "YES" ] ; then
-        innodb_enabled=1
-        fi
-        if [ "$mysql_version_num" -ge 050500 ] && [ "$mysql_version_num" -lt 050512 ] ; then 
-        mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-                if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
-                innodb_enabled=0
-                else
-                innodb_enabled=1
-                fi
-        elif [ "$major_version"  = '5.5' ] && [ "$mysql_version_num" -ge 050512 ] ; then
-        mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-                if [ "$ignore_builtin_innodb" = "ON" ] ; then
-                innodb_enabled=0
-                else
-                innodb_enabled=1
-                fi
-        elif [ "$mysql_version_num" -ge 050600 ] && [ "$mysql_version_num" -lt 050603 ] ; then
-        mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-                if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
-                innodb_enabled=0
-                else
-                innodb_enabled=1
-                fi
-        elif [ "$major_version" = '5.6' ] && [ "$mysql_version_num" -ge 050603 ] ; then
-        mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-                if [ "$ignore_builtin_innodb" = "ON" ] ; then
-                innodb_enabled=0
-                else
-                innodb_enabled=1
-                fi
-        fi
-        if [ "$innodb_enabled" = 1 ] ; then
-                mysql_variable \'innodb_buffer_pool_size\' innodb_buffer_pool_size
-                mysql_variable \'innodb_additional_mem_pool_size\' innodb_additional_mem_pool_size
-                mysql_variable \'innodb_fast_shutdown\' innodb_fast_shutdown
-                mysql_variable \'innodb_flush_log_at_trx_commit\' innodb_flush_log_at_trx_commit
-                mysql_variable \'innodb_locks_unsafe_for_binlog\' innodb_locks_unsafe_for_binlog
-                mysql_variable \'innodb_log_buffer_size\' innodb_log_buffer_size
-                mysql_variable \'innodb_log_file_size\' innodb_log_file_size
-                mysql_variable \'innodb_log_files_in_group\' innodb_log_files_in_group
-                mysql_variable \'innodb_safe_binlog\' innodb_safe_binlog
-                mysql_variable \'innodb_thread_concurrency\' innodb_thread_concurrency
+  if [ "$mysql_version_num" -lt 050500 ] && [ "$have_innodb" = "YES" ] ; then
+    innodb_enabled=1
+  fi
 
-                cecho "INNODB STATUS" boldblue
-                innodb_indexes=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
-                innodb_data=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(DATA_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
-                
-                if [ ! -z "$innodb_indexes" ] ; then
+  if [ "${mysql_version//Maria}" != "${mysql_version}" ] || \
+     [ "${mysql_version_num}" -ge 050700 ]; then
+    # In MariaDB and MySQL >=5.7, InnoDB is always present, excepting Rocks and the like.
+    mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
+    if [ "$ignore_builtin_innodb" = "ON" ] ; then
+      innodb_enabled=0
+    else
+      innodb_enabled=1
+    fi
+  elif [ "$mysql_version_num" -ge 050500 ] && [ "$mysql_version_num" -lt 050512 ] ; then 
+    mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
+    if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
+      innodb_enabled=0
+    else
+      innodb_enabled=1
+    fi
+  elif [ "$major_version"  = '5.5' ] && [ "$mysql_version_num" -ge 050512 ] ; then
+    mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
+    if [ "$ignore_builtin_innodb" = "ON" ] ; then
+      innodb_enabled=0
+    else
+      innodb_enabled=1
+    fi
+  elif [ "$mysql_version_num" -ge 050600 ] && [ "$mysql_version_num" -lt 050603 ] ; then
+    mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
+    if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
+      innodb_enabled=0
+    else
+      innodb_enabled=1
+    fi
+  elif [ "$major_version" = '5.6' ] && [ "$mysql_version_num" -ge 050603 ] ; then
+    mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
+    if [ "$ignore_builtin_innodb" = "ON" ] ; then
+      innodb_enabled=0
+    else
+      innodb_enabled=1
+    fi
+  fi
 
-                mysql_status \'Innodb_buffer_pool_pages_data\' innodb_buffer_pool_pages_data
-                mysql_status \'Innodb_buffer_pool_pages_misc\' innodb_buffer_pool_pages_misc
-                mysql_status \'Innodb_buffer_pool_pages_free\' innodb_buffer_pool_pages_free
-                mysql_status \'Innodb_buffer_pool_pages_total\' innodb_buffer_pool_pages_total
+  if [ "$innodb_enabled" = 1 ] ; then
+    mysql_variable \'innodb_buffer_pool_size\' innodb_buffer_pool_size
+    mysql_variable \'innodb_additional_mem_pool_size\' innodb_additional_mem_pool_size
+    mysql_variable \'innodb_fast_shutdown\' innodb_fast_shutdown
+    mysql_variable \'innodb_flush_log_at_trx_commit\' innodb_flush_log_at_trx_commit
+    mysql_variable \'innodb_locks_unsafe_for_binlog\' innodb_locks_unsafe_for_binlog
+    mysql_variable \'innodb_log_buffer_size\' innodb_log_buffer_size
+    mysql_variable \'innodb_log_file_size\' innodb_log_file_size
+    mysql_variable \'innodb_log_files_in_group\' innodb_log_files_in_group
+    mysql_variable \'innodb_safe_binlog\' innodb_safe_binlog
+    mysql_variable \'innodb_thread_concurrency\' innodb_thread_concurrency
 
-                mysql_status \'Innodb_buffer_pool_read_ahead_seq\' innodb_buffer_pool_read_ahead_seq
-                mysql_status \'Innodb_buffer_pool_read_requests\' innodb_buffer_pool_read_requests
+    cecho "INNODB STATUS" boldblue
+    innodb_indexes=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
+    innodb_data=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(DATA_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
+    
+    if [ ! -z "$innodb_indexes" ] ; then
+      mysql_status \'Innodb_buffer_pool_pages_data\' innodb_buffer_pool_pages_data
+      mysql_status \'Innodb_buffer_pool_pages_misc\' innodb_buffer_pool_pages_misc
+      mysql_status \'Innodb_buffer_pool_pages_free\' innodb_buffer_pool_pages_free
+      mysql_status \'Innodb_buffer_pool_pages_total\' innodb_buffer_pool_pages_total
 
-                mysql_status \'Innodb_os_log_pending_fsyncs\' innodb_os_log_pending_fsyncs
-                mysql_status \'Innodb_os_log_pending_writes\'   innodb_os_log_pending_writes
-                mysql_status \'Innodb_log_waits\' innodb_log_waits
+      mysql_status \'Innodb_buffer_pool_read_ahead_seq\' innodb_buffer_pool_read_ahead_seq
+      mysql_status \'Innodb_buffer_pool_read_requests\' innodb_buffer_pool_read_requests
 
-                mysql_status \'Innodb_row_lock_time\' innodb_row_lock_time
-                mysql_status \'Innodb_row_lock_waits\' innodb_row_lock_waits
+      mysql_status \'Innodb_os_log_pending_fsyncs\' innodb_os_log_pending_fsyncs
+      mysql_status \'Innodb_os_log_pending_writes\'   innodb_os_log_pending_writes
+      mysql_status \'Innodb_log_waits\' innodb_log_waits
 
-                human_readable $innodb_indexes innodb_indexesHR
-                cecho "Current InnoDB index space = $innodb_indexesHR $unit"
-                human_readable $innodb_data innodb_dataHR
-                cecho "Current InnoDB data space = $innodb_dataHR $unit"
-                percent_innodb_buffer_pool_free=$(($innodb_buffer_pool_pages_free*100/$innodb_buffer_pool_pages_total))
-                cecho "Current InnoDB buffer pool free = "$percent_innodb_buffer_pool_free" %"
+      mysql_status \'Innodb_row_lock_time\' innodb_row_lock_time
+      mysql_status \'Innodb_row_lock_waits\' innodb_row_lock_waits
 
-                else
-                cecho "Cannot parse InnoDB stats prior to 5.0.x" red
-                $mysql -s -e "SHOW /*!50000 ENGINE */ INNODB STATUS\G"
-                fi
+      human_readable $innodb_indexes innodb_indexesHR
+      cecho "Current InnoDB index space = $innodb_indexesHR $unit"
+      human_readable $innodb_data innodb_dataHR
+      cecho "Current InnoDB data space = $innodb_dataHR $unit"
+      percent_innodb_buffer_pool_free=$(($innodb_buffer_pool_pages_free*100/$innodb_buffer_pool_pages_total))
+      cecho "Current InnoDB buffer pool free = "$percent_innodb_buffer_pool_free" %"
 
-                human_readable $innodb_buffer_pool_size innodb_buffer_pool_sizeHR
-                cecho "Current innodb_buffer_pool_size = $innodb_buffer_pool_sizeHR $unit"
-                cecho "Depending on how much space your innodb indexes take up it may be safe"  
-                cecho "to increase this value to up to 2 / 3 of total system memory"
-        else
-                cecho "No InnoDB Support Enabled!" boldred
-        fi
+    else
+      cecho "Cannot parse InnoDB stats prior to 5.0.x" red
+      $mysql -s -e "SHOW /*!50000 ENGINE */ INNODB STATUS\G"
+    fi
+
+    human_readable $innodb_buffer_pool_size innodb_buffer_pool_sizeHR
+    cecho "Current innodb_buffer_pool_size = $innodb_buffer_pool_sizeHR $unit"
+    cecho "Depending on how much space your innodb indexes take up it may be safe"  
+    cecho "to increase this value to up to 2 / 3 of total system memory"
+  else
+    cecho "No InnoDB Support Enabled!" boldred
+  fi
 }
 
 total_memory_used () {
