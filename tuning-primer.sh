@@ -338,7 +338,6 @@ mysql_status () {
 
 mysql_variable () {
   local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
-  echo "'$1' '$2' '$variable'" >&2
   export "$2"=$variable
 }
 mysql_variableTSV () {
