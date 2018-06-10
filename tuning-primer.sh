@@ -1,13 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
-# vim: ts=8
+# vim: sw=2:et
 #########################################################################
 #                                                                       #
 #       MySQL performance tuning primer script                          #
-#       Writen by: Matthew Montgomery                                   #
-#       Report bugs to: https://bugs.launchpad.net/mysql-tuning-primer  #
+#       Writen by: Matthew Montgomery and Dan Reif                      #
+#       Report bugs to: https://github.com/BMDan/tuning-primer.sh/issues#
 #       Inspired by: MySQLARd (http://gert.sos.be/demo/mysqlar/)        #
-#       Version: 1.6-r1         Released: 2011-08-06                    #
+#       Version: 1.99           Released: 2018-06-10                    #
 #       Licenced under GPLv2                                            #
 #                                                                       #
 #########################################################################
@@ -37,136 +37,75 @@
 #########################################################################
 socket=
 
-export black='\033[0m'
-export boldblack='\033[1;0m'
-export red='\033[31m'
-export boldred='\033[1;31m'
-export green='\033[32m'
-export boldgreen='\033[1;32m'
-export yellow='\033[33m'
-export boldyellow='\033[1;33m'
-export blue='\033[34m'
-export boldblue='\033[1;34m'
-export magenta='\033[35m'
-export boldmagenta='\033[1;35m'
-export cyan='\033[36m'
-export boldcyan='\033[1;36m'
-export white='\033[37m'
-export boldwhite='\033[1;37m'
+function colorize() {
+  # As an explicit special case, "" yields sgr0 (i.e., black).
+  local originalcolor="${1}"
+  local basecolor="${originalcolor}"
 
+  basecolor="${basecolor#bold}"
+  basecolor="${basecolor#so}"
 
-cecho ()
+  case "$basecolor" in
+    'red')
+      tput setaf 1 ;;
+    'green')
+      tput setaf 2 ;;
+    'yellow')
+      tput setaf 3 ;;
+    'blue')
+      tput setaf 4 ;;
+    'magenta')
+      tput setaf 5 ;;
+    'cyan')
+      tput setaf 6 ;;
+    'white')
+      tput setaf 7 ;;
+    *) # Also "black":
+      [ "$basecolor" != "black" ] && [ -n "$basecolor" ] && echo "No such color '$basecolor'." >&2
+      tput sgr0 ;;
+  esac
 
+  # bold, etc.
+  if [ "$basecolor" != "$originalcolor" ]; then
+    case $originalcolor in
+      bold*)
+        tput bold ;;
+      so*)
+        tput smso ;;
+      *)
+        echo "No such color modifier '${originalcolor%$basecolor}'." >&2 ;;
+    esac
+  fi
+}
+
+function cecho()
+{
+  if [ -z "$1" ]; then
+    cecho "No message passed.\n" "$2"
+    return $?
+  fi
+  cechon "$1"$'\n' "$2"
+  return $?
+}
+
+function cechon()
+{
 ## -- Function to easliy print colored text -- ##
         
         # Color-echo.
         # Argument $1 = message
         # Argument $2 = color
-{
-local default_msg="No message passed."
+  local default_msg="No message passed."
 
-message=${1:-$default_msg}      # Defaults to default message.
+  message=${1:-$default_msg}    # Defaults to default message.
 
-#change it for fun
-#We use pure names
-color=${2:-black}               # Defaults to black, if not specified.
+  #change it for fun
+  #We use pure names
+  color=${2:-black}             # Defaults to black, if not specified.
 
-case $color in
-        black)
-                 printf "$black" ;;
-        boldblack)
-                 printf "$boldblack" ;;
-        red)
-                 printf "$red" ;;
-        boldred)
-                 printf "$boldred" ;;
-        green)
-                 printf "$green" ;;
-        boldgreen)
-                 printf "$boldgreen" ;;
-        yellow)
-                 printf "$yellow" ;;
-        boldyellow)
-                 printf "$boldyellow" ;;
-        blue)
-                 printf "$blue" ;;
-        boldblue)
-                 printf "$boldblue" ;;
-        magenta)
-                 printf "$magenta" ;;
-        boldmagenta)
-                 printf "$boldmagenta" ;;
-        cyan)
-                 printf "$cyan" ;;
-        boldcyan)
-                 printf "$boldcyan" ;;
-        white)
-                 printf "$white" ;;
-        boldwhite)
-                 printf "$boldwhite" ;;
-esac
-  printf "%s\n"  "$message"
-  tput sgr0                     # Reset to normal.
-  printf "$black"
-
-return
-}
-
-
-cechon ()               
-
-## -- Function to easliy print colored text -- ##
-
-        # Color-echo.
-        # Argument $1 = message
-        # Argument $2 = color
-{
-local default_msg="No message passed."
-                                # Doesn't really need to be a local variable.
-
-message=${1:-$default_msg}      # Defaults to default message.
-
-#change it for fun
-#We use pure names
-color=${2:-black}               # Defaults to black, if not specified.
-
-case $color in
-        black)
-                printf "$black" ;;
-        boldblack)
-                printf "$boldblack" ;;
-        red)
-                printf "$red" ;;
-        boldred)
-                printf "$boldred" ;;
-        green)
-                printf "$green" ;;
-        boldgreen)
-                printf "$boldgreen" ;;
-        yellow)
-                printf "$yellow" ;;
-        boldyellow)
-                printf "$boldyellow" ;;
-        blue)
-                printf "$blue" ;;
-        boldblue)
-                printf "$boldblue" ;;
-        magenta)
-                printf "$magenta" ;;
-        boldmagenta)
-                printf "$boldmagenta" ;;
-        cyan)
-                printf "$cyan" ;;
-        boldcyan)
-                printf "$boldcyan" ;;
-        white)
-                printf "$white" ;;
-        boldwhite)
-                printf "$boldwhite" ;;
-esac
+  colorize "$color"
   printf "%s"  "$message"
-  tput sgr0                     # Reset to normal.
-  printf "$black"
+  colorize ""                   # Reset to normal.
 
 return
 }
@@ -217,7 +156,7 @@ check_for_socket () {
 
 check_for_plesk_passwords () {
 
-## -- Check for the existance of plesk and login using it's credentials -- ##
+## -- Check for the existance of plesk and login using its credentials -- ##
 
         if [ -f /etc/psa/.psa.shadow ] ; then
                 mysql="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
@@ -1590,45 +1529,50 @@ prompt () {
 get_system_info
 # echo $ps_socket
 
-if [ -z "$1" ] ; then
-        login_validation
-        mode='ALL'
+if [ -z "${1-}" ] ; then
+  login_validation
+  mode='ALL'
 elif [ "$1" = "prompt" ] || [ "$1" = "PROMPT" ] ; then
-        mode=$1
+  mode=$1
 elif [ "$1" != "prompt" ] || [ "$1" != "PROMPT" ] ; then
-        login_validation
-        mode=$1
+  login_validation
+  mode=$1
 fi
 
 case $mode in 
-        all | ALL )
-        cecho " "
-        all
-        ;;
-        mem | memory |  MEM | MEMORY )
-        cecho " "
-        memory
-        ;;
-        file | FILE | disk | DISK )
-        cecho " "
-        file
-        ;;
-        banner | BANNER | header | HEADER | head | HEAD )
-        banner_info
-        ;;
-        misc | MISC | miscelaneous )
-        cecho " "
-        misc
-        ;;
-        innodb | INNODB )
-        banner_info
-        check_innodb_status ; echo
-        ;;
-        prompt | PROMPT )
-        prompt
-        ;;
-        *)
-        cecho "usage: $0 [ all | banner | file | innodb | memory | misc | prompt ]" boldred
-        exit 1  
-        ;;
+  all | ALL )
+    cecho " "
+    all
+    ;;
+  mem | memory |  MEM | MEMORY )
+    cecho " "
+    memory
+    ;;
+  file | FILE | disk | DISK )
+    cecho " "
+    file
+    ;;
+  banner | BANNER | header | HEADER | head | HEAD )
+    banner_info
+    ;;
+  misc | MISC | miscelaneous )
+    cecho " "
+    misc
+    ;;
+  innodb | INNODB )
+    banner_info
+    check_innodb_status ; echo
+    ;;
+  prompt | PROMPT )
+    prompt
+    ;;
+  debug | DEBUG )
+    # Run everything, then dump state.
+    all >/dev/null
+    env
+    ;;
+  *)
+    cecho "usage: $0 [ all | banner | file | innodb | memory | misc | prompt ]" boldred
+    exit 1  
+    ;;
 esac
