@@ -337,8 +337,9 @@ mysql_status () {
 #########################################################################
 
 mysql_variable () {
-        local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
-        export "$2"=$variable
+  local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
+  echo "'$1' '$2' '$variable'" >&2
+  export "$2"=$variable
 }
 mysql_variableTSV () {
         local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk -F \t '{ print $2 }')
@@ -821,7 +822,7 @@ check_sort_operations () {
         mysql_status \'Sort_merge_passes\' sort_merge_passes
         mysql_status \'Sort_scan\' sort_scan
         mysql_status \'Sort_range\' sort_range
-        mysql_variable \'sort_buffer%\' sort_buffer_size 
+        mysql_variable \'sort_buffer_size\' sort_buffer_size 
         mysql_variable \'read_rnd_buffer_size\' read_rnd_buffer_size 
 
         total_sorts=$(($sort_scan+$sort_range))
@@ -879,7 +880,7 @@ check_join_operations () {
 
         mysql_status \'Select_full_join\' select_full_join
         mysql_status \'Select_range_check\' select_range_check
-        mysql_variable \'join_buffer%\' join_buffer_size
+        mysql_variable \'join_buffer_size\' join_buffer_size
         
         ## Some 4K is dropped from join_buffer_size adding it back to make sane ##
         ## handling of human-readable conversion ## 
