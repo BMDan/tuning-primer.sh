@@ -1168,9 +1168,8 @@ check_table_scans () {
         fi
 }
 
-
-check_innodb_status () {
-
+function check_innodb_status()
+{
   ## See http://bugs.mysql.com/59393
 
   if [ "$mysql_version_num" -lt 050603 ] ; then
@@ -1257,7 +1256,7 @@ check_innodb_status () {
       human_readable $innodb_data innodb_dataHR
       cecho "Current InnoDB data space = $innodb_dataHR $unit"
       percent_innodb_buffer_pool_free=$(($innodb_buffer_pool_pages_free*100/$innodb_buffer_pool_pages_total))
-      cecho "Current InnoDB buffer pool free = "$percent_innodb_buffer_pool_free" %"
+      cecho "Current InnoDB buffer pool free = ${percent_innodb_buffer_pool_free} %"
 
     else
       cecho "Cannot parse InnoDB stats prior to 5.0.x" red
@@ -1422,7 +1421,7 @@ get_system_info () {
         found_socks=$(netstat -an | awk '/mysql(.*)?.sock/ { print $5 }') 
         export physical_memory=$(prtconf | awk '/^Memory\ size:/ { print $3*1048576 }')
     fi
-    if [ -z $(which bc) ] ; then
+    if [ -z "$(which bc)" ] ; then
         echo "Error: Command line calculator 'bc' not found!"
         exit
     fi
