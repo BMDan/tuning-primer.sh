@@ -120,6 +120,13 @@ function print_banner()
 ## -- Find the location of the mysql.sock file -- ##
 function check_for_socket()
 {
+  if [ -n "$socket" ] && [ ! -S "$socket" ]; then
+    cecho "No valid socket file at '$socket'!" boldred
+    cecho "You've explicitly specified a socket location, but that location either" red
+    cecho "doesn't exist, or isn't a socket." red
+    exit 1
+  fi
+
   if [ -z "$socket" ] ; then
     # Use ~/my.cnf version
     if [ -f ~/.my.cnf ] ; then
