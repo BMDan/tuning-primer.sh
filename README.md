@@ -7,23 +7,24 @@ This repository will be used to handle ongoing development and bugfixes for this
 Copied to Github with Matthew's permission.  That said, please don't bug him with questions about this repository!
 
 ## About this script
-This script takes information from `SHOW STATUS LIKE...` and `SHOW VARIABLES LIKE...` 
-to produce sane recomendations for tuning server variables. 
+This script takes information from `SHOW STATUS LIKE...` and `SHOW VARIABLES LIKE...` to produce sane recomendations for tuning server variables. 
+
 It is compatible with all versions of MySQL 3.23 and higher (including 5.x).
+
 Currently it handles recomendations for the following:
 
-Slow Query Log
-Max Connections
-Worker Threads
-Key Buffer
-Query Cache
-Sort Buffer
-Joins
-Temp Tables
-Table (Open & Definition) Cache
-Table Locking
-Table Scans (read_buffer)
-Innodb Status
+* Slow Query Log
+* Max Connections
+* Worker Threads
+* Key Buffer [MyISAM only]
+* Query Cache
+* Sort Buffer
+* Joins
+* Temp Tables
+* Table (Open & Definition) Cache
+* Table Locking
+* Table Scans (`read_buffer`) [MyISAM only]
+* InnoDB Status
 
 ### Recent Changes
 
