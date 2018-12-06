@@ -81,7 +81,7 @@ function colorize() {
 function cecho()
 {
   if [ -z "${1-}" ]; then
-    cecho "No message passed.\n" "${2-}"
+    cecho "No message passed." "${2-}"
     return $?
   fi
   cechon "$1"$'\n' "${2-}"
