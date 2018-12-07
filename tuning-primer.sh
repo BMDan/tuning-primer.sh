@@ -132,7 +132,7 @@ function check_for_socket()
     if [ -f ~/.my.cnf ] ; then
       # Use the last one we find in the file.  We could be smarter here and
       # parse section headers and so forth, but meh.
-      cnf_socket="$(awk -F '=' '$1 == "socket" { s=$2 } END { print s }' ~/my.cnf)"
+      cnf_socket="$(awk -F '=' '$1 == "socket" { s=$2 } END { print s }' ~/.my.cnf)"
     fi
 
     if [ -S "$cnf_socket" ] ; then
@@ -513,6 +513,8 @@ post_uptime_warning () {
 check_slow_queries () {
 
 ## -- Slow Queries -- ## 
+
+        # FIXME: multiple parts of this are rather awful, not least how the option is tested.
 
         cecho "SLOW QUERIES" boldblue
 
