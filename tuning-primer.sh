@@ -241,7 +241,7 @@ function second_login_failed()
     yes | y | Y | YES)
     answer1='yes'
     read -p "User: " user
-    read -rp "Password: " pass
+    read -rsp "Password: " pass
 
     local MYSQL_COMMAND_PARAMS="-S $socket -u$user"
     export MYSQL_COMMAND="mysql $MYSQL_COMMAND_PARAMS"
@@ -1499,7 +1499,7 @@ all () {
 prompt () {
         prompted='true'
         read -p "Username [anonymous] : " user
-        read -rp "Password [<none>] : " pass
+        read -rsp "Password [<none>] : " pass
         cecho " "
         read -p "Socket [ /var/lib/mysql/mysql.sock ] : " socket
         if [ -z $socket ] ; then
