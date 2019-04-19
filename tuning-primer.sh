@@ -110,6 +110,18 @@ function cechon()
 return
 }
 
+function write_mycnf() {
+  # $1: Path to .my.cnf
+  # $2: Path to socket
+  # $3: username
+  # $4: password
+  cat > "${1}" <<EOF
+[client]
+socket=$2
+user=$3
+password=$4
+EOF
+}
 
 function print_banner()
 {
@@ -196,7 +208,7 @@ check_mysql_login () {
                 fi
                 
         else 
-                cecho "Unknow exit status" red
+                cecho "Unknown exit status" red
                 exit -1
         fi
 }
@@ -231,27 +243,25 @@ function second_login_failed()
     read -p "User: " user
     read -rp "Password: " pass
 
-    local PASS_PART=""
-    if [ ! -z "$pass" ]; then
-      PASS_PART=" -p$pass"
-    fi
-    export MYSQL_COMMAND="mysql -S $socket -u$user$PASS_PART"
-    export MYSQLADMIN_COMMAND="mysqladmin -S $socket -u$user$PASS_PART"
+    local MYSQL_COMMAND_PARAMS="-S $socket -u$user"
+    export MYSQL_COMMAND="mysql $MYSQL_COMMAND_PARAMS"
+    export MYSQLADMIN_COMMAND="mysqladmin $MYSQL_COMMAND_PARAMS"
 
     ;;
     *)
     cecho "Please create a valid login to MySQL"
-    cecho "Or, set correct values for  'user=' and 'password=' in ~/.my.cnf"
+    cecho "Or, set correct values for 'user=' and 'password=' in ~/.my.cnf"
     ;;
   esac
   cecho " "
-  read -p "Would you like me to create a ~/.my.cnf file for you? [y/N] : " REPLY
+  echo "Would you like me to create a ~/.my.cnf file for you?  If you answer 'N',"
+  read -p "then I'll create a secure, temporary one instead.  [y/N] : " REPLY
   case $REPLY in
     yes | y | Y | YES)
     answer2='yes'
     if [ ! -f ~/.my.cnf ] ; then
       umask 077
-      printf "[client]\nuser=$user\npassword=$pass\nsocket=$socket" > ~/.my.cnf
+      write_mycnf "~/.my.cnf" "$socket" "$user" "$pass"
       if [ "$answer1" != 'yes' ] ; then
         exit 1
       else
@@ -264,7 +274,7 @@ function second_login_failed()
       printf "\n"
       read -p "Replace ? [y/N] : " REPLY
       if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ] ; then 
-      printf "[client]\nuser=$user\npassword=$pass\socket=$socket" > ~/.my.cnf
+        write_mycnf "~/.my.cnf" "$socket" "$user" "$pass"
         if [ "$answer1" != 'yes' ] ; then
           exit 1
         else
@@ -281,6 +291,11 @@ function second_login_failed()
     if [ "$answer1" != 'yes' ] ; then
       exit 1
     else
+      local tempmycnf
+      tempmycnf="$(mktemp)"
+      write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
+      export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
+      export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
       final_login_attempt
       return 0
     fi
@@ -1491,12 +1506,12 @@ prompt () {
                 export socket='/var/lib/mysql/mysql.sock'
         fi
 
-        local PASS_PART=""
-        if [ ! -z "$pass" ]; then
-                PASS_PART=" -p$pass"
-        fi
-        export MYSQL_COMMAND="mysql -S $socket -u$user$PASS_PART"
-        export MYSQLADMIN_COMMAND="mysqladmin -S $socket -u$user$PASS_PART"
+        local tempmycnf
+        tempmycnf="$(mktemp)"
+        write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
+
+        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -S $socket -u$user"
+        export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -S $socket -u$user" 
 
         check_for_socket
         check_mysql_login
