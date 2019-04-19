@@ -181,7 +181,7 @@ check_mysql_login () {
 
 ## -- Test for running mysql -- ##
 
-        is_up=$($mysqladmin ping 2>&1)
+        is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
         if [ "$is_up" = "mysqld is alive" ] ; then
                 echo UP > /dev/null
                 # echo $is_up
@@ -202,7 +202,7 @@ check_mysql_login () {
 }
 
 final_login_attempt () {
-        is_up=$($mysqladmin ping 2>&1)
+        is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
         if [ "$is_up" = "mysqld is alive" ] ; then
                 echo UP > /dev/null
         elif [ "$is_up" != "mysqld is alive" ] ; then
@@ -230,13 +230,14 @@ function second_login_failed()
     answer1='yes'
     read -p "User: " user
     read -rp "Password: " pass
-    if [ -z $pass ] ; then
-    export mysql="$mysql -S$socket -u$user"
-    export mysqladmin="$mysqladmin -S$socket -u$user"
-    else
-    export mysql="$mysql -S$socket -u$user -p$pass"
-    export mysqladmin="$mysqladmin -S$socket -u$user -p$pass"
+
+    local PASS_PART=""
+    if [ ! -z "$pass" ]; then
+      PASS_PART=" -p$pass"
     fi
+    export MYSQL_COMMAND="mysql -S $socket -u$user$PASS_PART"
+    export MYSQLADMIN_COMMAND="mysqladmin -S $socket -u$user$PASS_PART"
+
     ;;
     *)
     cecho "Please create a valid login to MySQL"
@@ -301,7 +302,7 @@ find_webmin_passwords () {
                         chmod 600 ~/.my.cnf
                         printf "[client]\nuser=$user\npassword=$pass" > ~/.my.cnf 
                         cecho "Retrying login"
-                        is_up=$($mysqladmin ping 2>&1)
+                        is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
                         if [ "$is_up" = "mysqld is alive"  ] ; then
                                 echo UP > /dev/null
                         else
@@ -328,7 +329,7 @@ find_webmin_passwords () {
 #########################################################################
 
 mysql_status () {
-        local status=$($mysql -Bse "show /*!50000 global */ status like $1" | awk '{ print $2 }')
+        local status=$($MYSQL_COMMAND -Bse "show /*!50000 global */ status like $1" | awk '{ print $2 }')
         export "$2"=$status
 }
 
@@ -344,11 +345,11 @@ mysql_status () {
 #########################################################################
 
 mysql_variable () {
-  local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
+  local variable=$($MYSQL_COMMAND -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
   export "$2"=$variable
 }
 mysql_variableTSV () {
-  local variable=$($mysql -Bse "show /*!50000 global */ variables like $1" | awk -F '\t' '{ print $2 }')
+  local variable=$($MYSQL_COMMAND -Bse "show /*!50000 global */ variables like $1" | awk -F '\t' '{ print $2 }')
   export "$2"=$variable
 }
 
@@ -684,7 +685,7 @@ check_key_buffer_size () {
         mysql_variable \'key_buffer_size\' key_buffer_size
         mysql_variable \'datadir\' datadir
         mysql_variable \'version_compile_machine\' mysql_version_compile_machine
-        myisam_indexes=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='MyISAM' */")
+        myisam_indexes=$($MYSQL_COMMAND -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='MyISAM' */")
 
         if [ -z $myisam_indexes ] ; then
                 myisam_indexes=$(find $datadir -name '*.MYI' -exec du $duflags '{}' \; 2>&1 | awk '{ s += $1 } END { printf("%.0f\n", s )}')
@@ -1027,7 +1028,7 @@ check_table_cache () {
         mysql_status \'Opened_tables\' opened_tables
         mysql_status \'Open_table_definitions\' open_table_definitions
  
-        table_count=$($mysql -Bse "/*!50000 SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' */")
+        table_count=$($MYSQL_COMMAND -Bse "/*!50000 SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' */")
 
         if [ -z "$table_count" ] ; then
                 if [ "$UID" != "$socket_owner" ] && [ "$UID" != "0" ] ; then
@@ -1241,8 +1242,8 @@ function check_innodb_status()
     mysql_variable \'innodb_thread_concurrency\' innodb_thread_concurrency
 
     cecho "INNODB STATUS" boldblue
-    innodb_indexes=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
-    innodb_data=$($mysql -Bse "/*!50000 SELECT IFNULL(SUM(DATA_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
+    innodb_indexes=$($MYSQL_COMMAND -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
+    innodb_data=$($MYSQL_COMMAND -Bse "/*!50000 SELECT IFNULL(SUM(DATA_LENGTH),0) from information_schema.TABLES where ENGINE='InnoDB' */")
     
     if [ ! -z "$innodb_indexes" ] ; then
       mysql_status \'Innodb_buffer_pool_pages_data\' innodb_buffer_pool_pages_data
@@ -1269,7 +1270,7 @@ function check_innodb_status()
 
     else
       cecho "Cannot parse InnoDB stats prior to 5.0.x" red
-      $mysql -s -e "SHOW /*!50000 ENGINE */ INNODB STATUS\G"
+      $MYSQL_COMMAND -s -e "SHOW /*!50000 ENGINE */ INNODB STATUS\G"
     fi
 
     human_readable $innodb_buffer_pool_size innodb_buffer_pool_sizeHR
@@ -1384,17 +1385,17 @@ login_validation () {
         check_for_socket                # determine the socket location -- 1st login
         check_for_plesk_passwords       # determine the login method -- 2nd login
         check_mysql_login               # determine if mysql is accepting login -- 3rd login
-        export major_version=$($mysql -Bse "SELECT SUBSTRING_INDEX(VERSION(), '.', +2)")
-#       export mysql_version_num=$($mysql -Bse "SELECT LEFT(REPLACE(SUBSTRING_INDEX(VERSION(), '-', +1), '.', ''),4)" )
-        export mysql_version_num=$($mysql -Bse "SELECT VERSION()" | 
+        export major_version=$($MYSQL_COMMAND -Bse "SELECT SUBSTRING_INDEX(VERSION(), '.', +2)")
+#       export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT LEFT(REPLACE(SUBSTRING_INDEX(VERSION(), '-', +1), '.', ''),4)" )
+        export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT VERSION()" | 
                 awk -F \. '{ printf "%02d", $1; printf "%02d", $2; printf "%02d", $3 }')
 
 }
 
 shared_info () {
-        export major_version=$($mysql -Bse "SELECT SUBSTRING_INDEX(VERSION(), '.', +2)")
-        # export mysql_version_num=$($mysql -Bse "SELECT LEFT(REPLACE(SUBSTRING_INDEX(VERSION(), '-', +1), '.', ''),4)" )
-        export mysql_version_num=$($mysql -Bse "SELECT VERSION()" | 
+        export major_version=$($MYSQL_COMMAND -Bse "SELECT SUBSTRING_INDEX(VERSION(), '.', +2)")
+        # export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT LEFT(REPLACE(SUBSTRING_INDEX(VERSION(), '-', +1), '.', ''),4)" )
+        export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT VERSION()" | 
                 awk -F \. '{ printf "%02d", $1; printf "%02d", $2; printf "%02d", $3 }')
         mysql_status \'Questions\' questions
 #       socket_owner=$(find -L $socket -printf '%u\n')
@@ -1490,13 +1491,12 @@ prompt () {
                 export socket='/var/lib/mysql/mysql.sock'
         fi
 
-        if [ -z $pass ] ; then
-        export mysql="mysql -S $socket -u$user"
-        export mysqladmin="mysqladmin -S $socket -u$user"
-        else
-        export mysql="mysql -S $socket -u$user -p$pass"
-        export mysqladmin="mysqladmin -S $socket -u$user -p$pass"
+        local PASS_PART=""
+        if [ ! -z "$pass" ]; then
+                PASS_PART=" -p$pass"
         fi
+        export MYSQL_COMMAND="mysql -S $socket -u$user$PASS_PART"
+        export MYSQLADMIN_COMMAND="mysqladmin -S $socket -u$user$PASS_PART"
 
         check_for_socket
         check_mysql_login
