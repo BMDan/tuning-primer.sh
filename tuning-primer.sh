@@ -179,11 +179,11 @@ check_for_plesk_passwords () {
 ## -- Check for the existance of plesk and login using its credentials -- ##
 
         if [ -f /etc/psa/.psa.shadow ] ; then
-                mysql="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
-                mysqladmin="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+                MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+                MYSQLADMIN_COMMAND="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
         else
-                mysql="mysql"
-                mysqladmin="mysqladmin"
+                MYSQL_COMMAND="mysql"
+                MYSQLADMIN_COMMAND="mysqladmin"
                 # mysql="mysql -S $socket"
                 # mysqladmin="mysqladmin -S $socket"
         fi
