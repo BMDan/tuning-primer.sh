@@ -193,35 +193,30 @@ check_mysql_login () {
 
 ## -- Test for running mysql -- ##
 
-        is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
-        if [ "$is_up" = "mysqld is alive" ] ; then
-                echo UP > /dev/null
-                # echo $is_up
-        elif [ "$is_up" != "mysqld is alive" ] ; then
-                printf "\n"
-                cecho "Using login values from ~/.my.cnf" 
-                cecho "- INITIAL LOGIN ATTEMPT FAILED -" boldred
-                if [ -z $prompted ] ; then
-                find_webmin_passwords
-                else
-                        return 1
-                fi
-                
-        else 
-                cecho "Unknown exit status" red
-                exit -1
-        fi
+  is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
+  if [ "$is_up" = "mysqld is alive" ] ; then
+    echo UP > /dev/null
+  else
+    printf "\n"
+    cecho "Using login values from ~/.my.cnf" 
+    cecho "- INITIAL LOGIN ATTEMPT FAILED -" boldred
+    if [ -z $prompted ] ; then
+      find_webmin_passwords
+    else
+      return 1
+    fi
+  fi
 }
 
 final_login_attempt () {
-        is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
-        if [ "$is_up" = "mysqld is alive" ] ; then
-                echo UP > /dev/null
-        elif [ "$is_up" != "mysqld is alive" ] ; then
-                cecho "- FINAL LOGIN ATTEMPT FAILED -" boldred
-                cecho "Unable to log into socket: $socket" boldred
-                exit 1
-        fi
+  is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
+  if [ "$is_up" = "mysqld is alive" ] ; then
+    echo UP > /dev/null
+  else
+    cecho "- FINAL LOGIN ATTEMPT FAILED -" boldred
+    cecho "Unable to log into socket: $socket" boldred
+    exit 1
+  fi
 }
 
 ## -- create a ~/.my.cnf and exit when all else fails -- ##
