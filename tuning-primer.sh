@@ -112,12 +112,14 @@ return
 
 function write_mycnf() {
   # $1: Path to .my.cnf
-  # $2: Path to socket
+  # $2: Path to socket (optional)
   # $3: username
   # $4: password
+  local socketcomment=""
+  [ -z "$2" ] && socketcomment="#"
   cat > "${1}" <<EOF
 [client]
-socket=$2
+${socketcomment}socket=$2
 user=$3
 password=$4
 EOF
@@ -140,7 +142,7 @@ function check_for_socket()
   fi
 
   if [ -z "$socket" ] ; then
-    # Use ~/my.cnf version
+    # Use ~/.my.cnf version
     if [ -f ~/.my.cnf ] ; then
       # Use the last one we find in the file.  We could be smarter here and
       # parse section headers and so forth, but meh.
@@ -256,7 +258,7 @@ function second_login_failed()
     answer2='yes'
     if [ ! -f ~/.my.cnf ] ; then
       umask 077
-      write_mycnf "~/.my.cnf" "$socket" "$user" "$pass"
+      write_mycnf "${HOME}/.my.cnf" "$socket" "$user" "$pass"
       if [ "$answer1" != 'yes' ] ; then
         exit 1
       else
@@ -269,7 +271,7 @@ function second_login_failed()
       printf "\n"
       read -p "Replace ? [y/N] : " REPLY
       if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ] ; then 
-        write_mycnf "~/.my.cnf" "$socket" "$user" "$pass"
+        write_mycnf "${HOME}/.my.cnf" "$socket" "$user" "$pass"
         if [ "$answer1" != 'yes' ] ; then
           exit 1
         else
@@ -310,7 +312,7 @@ find_webmin_passwords () {
                         cecho "Setting login info as User: $user Password: $pass"
                         touch ~/.my.cnf
                         chmod 600 ~/.my.cnf
-                        printf "[client]\nuser=$user\npassword=$pass" > ~/.my.cnf 
+                        write_mycnf "${HOME}/.my.cnf" "" "$user" "$pass"
                         cecho "Retrying login"
                         is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
                         if [ "$is_up" = "mysqld is alive"  ] ; then
