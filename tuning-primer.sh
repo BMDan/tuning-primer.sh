@@ -534,40 +534,36 @@ check_slow_queries () {
         mysql_status \'Slow_queries\' slow_queries
         mysql_variable \'long_query_time\' long_query_time
         mysql_variable \'log%queries\' log_slow_queries
+        mysql_variable \'slow_query_log\' slow_query_log
         
         prefered_query_time=5
-        if [ -e /etc/my.cnf ] ; then
-                if [ -z $log_slow_queries ] ; then
-                        log_slow_queries=$(grep log-slow-queries /etc/my.cnf)
-                fi
+        if [ -z $log_slow_queries ] ; then
+            log_slow_queries="$slow_query_log"
         fi
 
         if [ "$log_slow_queries" = 'ON' ] ; then
                 cecho "The slow query log is enabled."
-        elif [ "$log_slow_queries" = 'OFF' ] ; then
+        elif [ "$log_slow_queries" = 'OFF' ] || [ -z $log_slow_queries ] ; then
                 cechon "The slow query log is "
                 cechon "NOT" boldred
                 cecho " enabled."
-        elif [ -z $log_slow_queries ] ; then
-                cechon "The slow query log is "
-                cechon "NOT" boldred
-                cecho " enabled."
+                return
         else
-                cecho "Error: $log_slow_queries" boldred
+                cecho "Slow query log check failed; error: $log_slow_queries/$slow_query_log" boldred
         fi
         cecho "Current long_query_time = $long_query_time sec."
-        cechon "You have "
+        cechon "Since startup, "
         cechon "$slow_queries" boldred 
         cechon " out of "
         cechon "$questions" boldred
-        cecho " that take longer than $long_query_time sec. to complete"
+        cecho " queries have taken longer than <long_query_time-when-they-were-executed> to complete."
         
         float2int long_query_time long_query_timeInt
 
         if [ $long_query_timeInt -gt $prefered_query_time ] ; then
                 cecho "Your long_query_time may be too high, I typically set this under $prefered_query_time sec." red
         else
-                cecho "Your long_query_time seems to be fine" green
+                cecho "Your long_query_time seems reasonable." green
         fi 
 
 }
