@@ -1551,14 +1551,12 @@ prompt () {
 get_system_info
 # echo $ps_socket
 
+mode="$1"
 if [ -z "${1-}" ] ; then
   login_validation
   mode='ALL'
-elif [ "$1" = "prompt" ] || [ "$1" = "PROMPT" ] ; then
-  mode=$1
-elif [ "$1" != "prompt" ] || [ "$1" != "PROMPT" ] ; then
+elif [ "$1" != "prompt" ] && [ "$1" != "PROMPT" ] ; then
   login_validation
-  mode=$1
 fi
 
 case $mode in 
