@@ -553,10 +553,16 @@ check_slow_queries () {
         
         if [ "${long_query_time%%.*}" -ge $PREFERRED_QUERY_TIME ] ; then
                 cecho "Your long_query_time may be too high, I typically set this under $PREFERRED_QUERY_TIME sec." red
+        elif [ "${long_query_time/.}" -eq 0 ] ; then
+                cechon "Your long_query_time is set to "
+                cechon "zero" boldred
+                cechon ", which will cause "
+                cechon "ALL queries to be logged" red
+                cecho "!"
+                cecho "If you actually WANT to log all queries, use the query log, not the slow query log."
         else
                 cecho "Your long_query_time seems reasonable." green
         fi 
-
 }
 
 check_binary_log () {
