@@ -365,11 +365,6 @@ mysql_variableTSV () {
   export "$2"=$variable
 }
 
-float2int () {
-        local variable=$(echo "$1 / 1" | bc -l)
-        export "$2"=$variable
-}
-
 # -- Divide two integers -- #
 function divide()
 {
@@ -536,7 +531,7 @@ check_slow_queries () {
         mysql_variable \'log%queries\' log_slow_queries
         mysql_variable \'slow_query_log\' slow_query_log
         
-        prefered_query_time=5
+        preferred_query_time=5
         if [ -z $log_slow_queries ] ; then
             log_slow_queries="$slow_query_log"
         fi
@@ -558,10 +553,8 @@ check_slow_queries () {
         cechon "$questions" boldred
         cecho " queries have taken longer than <long_query_time-when-they-were-executed> to complete."
         
-        float2int long_query_time long_query_timeInt
-
-        if [ $long_query_timeInt -gt $prefered_query_time ] ; then
-                cecho "Your long_query_time may be too high, I typically set this under $prefered_query_time sec." red
+        if [ ${long_query_time%%.*} -gt $preferred_query_time ] ; then
+                cecho "Your long_query_time may be too high, I typically set this under $preferred_query_time sec." red
         else
                 cecho "Your long_query_time seems reasonable." green
         fi 
