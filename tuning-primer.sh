@@ -551,7 +551,7 @@ check_slow_queries () {
         cechon "$questions" boldred
         cecho " queries have taken longer than <long_query_time-when-they-were-executed> to complete."
         
-        if [ "${long_query_time%%.*}" -gt $PREFERRED_QUERY_TIME ] ; then
+        if [ "${long_query_time%%.*}" -ge $PREFERRED_QUERY_TIME ] ; then
                 cecho "Your long_query_time may be too high, I typically set this under $PREFERRED_QUERY_TIME sec." red
         else
                 cecho "Your long_query_time seems reasonable." green
