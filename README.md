@@ -5,7 +5,7 @@ Download and run <a href="https://raw.githubusercontent.com/BMDan/tuning-primer.
 If you _don't_ like downloading anything and you _do_ like living dangerously, you could instead run it with something like this&sup1;:
 
 ```bash
-curl -L https://tuning-primer.sh/archive/master.tar.gz | tar -zxvO '*/tuning-primer.sh' | bash
+curl -L https://raw.githubusercontent.com/BMDan/tuning-primer.sh/master/tuning-primer.sh | bash
 ```
 
 ## About this repository
