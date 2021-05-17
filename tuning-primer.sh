@@ -1187,9 +1187,7 @@ function check_innodb_status()
 {
   ## See http://bugs.mysql.com/59393
 
-  if [ "$mysql_version_num" -lt 050603 ] ; then
-    mysql_variable \'have_innodb\' have_innodb
-  fi
+  mysql_variable \'have_innodb\' have_innodb
 
   if [ "$mysql_version_num" -lt 050500 ] && [ "$have_innodb" = "YES" ] ; then
     innodb_enabled=1
@@ -1199,7 +1197,10 @@ function check_innodb_status()
      [ "${mysql_version_num}" -ge 050700 ]; then
     # In MariaDB and MySQL >=5.7, InnoDB is always present, excepting Rocks and the like.
     mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-    if [ "$ignore_builtin_innodb" = "ON" ] ; then
+    # MariaDB gives you a lovely option for disabling InnoDB that doesn't _technically_
+    # necessitate setting ignore_builtin_innodb.  Thanks for that.  Very cute.  See
+    # https://github.com/BMDan/tuning-primer.sh/issues/12 .
+    if [ "$ignore_builtin_innodb" = "ON" ] || [ "$have_innodb" = "DISABLED" ] || [ "$have_innodb" = "NO" ]; then
       innodb_enabled=0
     else
       innodb_enabled=1
