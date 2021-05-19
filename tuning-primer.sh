@@ -135,12 +135,15 @@ function print_banner()
 function check_for_socket()
 {
   if [ -n "$socket" ] && [ ! -S "$socket" ]; then
+    # If you specify a socket but that socket doesn't exist, we exit.
     cecho "No valid socket file at '$socket'!" boldred
     cecho "You've explicitly specified a socket location, but that location either" red
     cecho "doesn't exist, or isn't a socket." red
     exit 1
   fi
 
+  # Otherwise, try to find the socket.  Failure is now OK; we can always
+  # try another way to connect.
   if [ -z "$socket" ] ; then
     # Use ~/.my.cnf version
     if [ -f ~/.my.cnf ] ; then
@@ -165,14 +168,11 @@ function check_for_socket()
   fi
 
   if [ -S "$socket" ] ; then
-    echo UP > /dev/null
-  else
-    cecho "No valid socket file \"$socket\" found!" boldred
-    cecho "The mysqld process is not running or it is installed in a custom location." red
-    cecho "If you are sure mysqld is running, execute script in \"prompt\" mode or set " red
-    cecho "the socket= variable at the top of this script" red
-    exit 1
+    export MYSQL_COMMAND="${MYSQL_COMMAND} -S ${socket}"
+    return 0
   fi
+  
+  return 1
 }
 
 
@@ -180,40 +180,42 @@ check_for_plesk_passwords () {
 
 ## -- Check for the existance of plesk and login using its credentials -- ##
 
-        if [ -f /etc/psa/.psa.shadow ] ; then
-                MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
-                MYSQLADMIN_COMMAND="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
-        else
-                MYSQL_COMMAND="mysql"
-                MYSQLADMIN_COMMAND="mysqladmin"
-                # mysql="mysql -S $socket"
-                # mysqladmin="mysqladmin -S $socket"
-        fi
+  if [ -f /etc/psa/.psa.shadow ] ; then
+    MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+    MYSQLADMIN_COMMAND="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+  fi
 }
 
 check_mysql_login () {
 
-## -- Test for running mysql -- ##
+## -- Try just connecting (i.e., via .my.cnf defaults, in practice) -- ##
 
-  is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
-  if [ "$is_up" = "mysqld is alive" ] ; then
-    echo UP > /dev/null
-  else
-    printf "\n"
-    cecho "Using login values from ~/.my.cnf" 
-    cecho "- INITIAL LOGIN ATTEMPT FAILED -" boldred
-    if [ -z $prompted ] ; then
-      find_webmin_passwords
-    else
-      return 1
+  local is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
+  local print_defaults=$($MYSQLADMIN_COMMAND --print-defaults 2>/dev/null)
+
+  if [ "$is_up" = "mysqld is alive" ]; then
+    if [ "${print_defaults//*--host=*}" = "" ] &&
+     ! [ "${print_defaults//*--host=127\.0\.0\.1*}" = "" ] &&
+     ! [ "${print_defaults//*--host=::1*}" = "" ] &&
+     ! [ "${print_defaults//*--host=localhost*}" = "" ]; then
+      cecho "WARNING: you might be connecting to a remote server.  If so, some" boldred
+      cecho "results may be based on incorrect assumptions.  See #13 on Github." boldred
     fi
+    return 0
   fi
+  printf "\n"
+  cecho "Using login values from ~/.my.cnf" 
+  cecho "- INITIAL LOGIN ATTEMPT FAILED -" boldred
+  if [ -z $prompted ] ; then
+    find_webmin_passwords
+  fi
+  return 1
 }
 
 final_login_attempt () {
   is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
   if [ "$is_up" = "mysqld is alive" ] ; then
-    echo UP > /dev/null
+    return 0
   else
     cecho "- FINAL LOGIN ATTEMPT FAILED -" boldred
     cecho "Unable to log into socket: $socket" boldred
@@ -1388,9 +1390,28 @@ total_memory_used () {
 ## Required Functions  ## 
 
 login_validation () {
-        check_for_socket                # determine the socket location -- 1st login
-        check_for_plesk_passwords       # determine the login method -- 2nd login
-        check_mysql_login               # determine if mysql is accepting login -- 3rd login
+        export MYSQL_COMMAND="mysql"
+        export MYSQLADMIN_COMMAND="mysqladmin"
+
+        if [ -n "${socket-}" ]; then
+          # First, we look for a socket.  Then, we try to find old Plesk
+          # login creds (is this still needed?).  Then, we try the truly
+          # revolutionary approach of just trying to connect and seeing
+          # what happens.
+          check_for_socket ||
+          check_for_plesk_passwords ||
+          check_mysql_login ||
+          exit 1
+        else
+          # If the user didn't specify a socket for us (and they usually
+          # won't), let's try to just connect and see if that works.  If
+          # it doesn't, try to guess at a socket path, and then break out
+          # the ol' Plesk trick if things get really desperate.
+          check_mysql_login ||
+          check_for_socket ||
+          check_for_plesk_passwords ||
+          exit 1
+        fi
         export major_version=$($MYSQL_COMMAND -Bse "SELECT SUBSTRING_INDEX(VERSION(), '.', +2)")
 #       export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT LEFT(REPLACE(SUBSTRING_INDEX(VERSION(), '-', +1), '.', ''),4)" )
         export mysql_version_num=$($MYSQL_COMMAND -Bse "SELECT VERSION()" | 
@@ -1504,7 +1525,7 @@ prompt () {
         export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -S $socket -u$user"
         export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -S $socket -u$user" 
 
-        check_for_socket
+        check_for_socket || \
         check_mysql_login
 
         if [ $? = 1 ] ; then
