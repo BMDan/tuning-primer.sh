@@ -18,14 +18,14 @@
 #                                                                       #
 #       Available Modes:                                                #
 #               all :           perform all checks (default)            #
-#               prompt :        prompt for login credintials and socket #
+#               prompt :        prompt for login credentials and socket #
 #                               and execution mode                      #
 #               mem, memory :   run checks for tunable options which    #
-#                               effect memory usage                     #
-#               disk, file :    run checks for options which effect     #
+#                               affect memory usage                     #
+#               disk, file :    run checks for options which affect     #
 #                               i/o performance or file handle limits   #
 #               innodb :        run InnoDB checks /* to be improved */  # 
-#               misc :          run checks for that don't categorise    #
+#               misc :          run checks that don't fit categories    #
 #                               well Slow Queries, Binary logs,         #
 #                               Used Connections and Worker Threads     #
 #########################################################################
@@ -90,7 +90,7 @@ function cecho()
 
 function cechon()
 {
-## -- Function to easliy print colored text -- ##
+## -- Function to easily print colored text -- ##
         
         # Color-echo.
         # Argument $1 = message
