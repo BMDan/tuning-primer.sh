@@ -592,7 +592,7 @@ check_binary_log () {
                         cecho "See http://dev.mysql.com/doc/refman/$major_version/en/purge-master-logs.html" yellow
                 fi
                 if [ "$sync_binlog" = 0 ] ; then
-                        cecho "Binlog sync is not enabled, you could loose binlog records during a server crash" red
+                        cecho "Binlog sync is not enabled, you could lose binlog records during a server crash" red
                 fi
         else
                 cechon "The binary update log is "
@@ -971,7 +971,7 @@ check_tmp_tables () {
         if [ $tmp_disk_tables -ge 25 ] ; then
                 cecho "Perhaps you should increase your tmp_table_size and/or max_heap_table_size" boldred
                 cecho "to reduce the number of disk-based temporary tables" boldred
-                cecho "Note! BLOB and TEXT columns are not allow in memory tables." yellow
+                cecho "Note! BLOB and TEXT columns are not allowed in memory tables." yellow
                 cecho "If you are using these columns raising these values might not impact your " yellow
                 cecho  "ratio of on disk temp tables." yellow
         else
@@ -1125,7 +1125,7 @@ check_table_locking () {
         if [ $immediate_locks_miss_rate -lt 5000 ] ; then
                 cecho "You may benefit from selective use of InnoDB."
                 if [ "$low_priority_updates" = 'OFF' ] ; then
-                cecho "If you have long running SELECT's against MyISAM tables and perform"
+                cecho "If you have long-running SELECT's against MyISAM tables and perform"
                 cecho "frequent updates consider setting 'low_priority_updates=1'"
                 fi
                 if [ "$mysql_version_num" -gt 050000 ] && [ "$mysql_version_num" -lt 050500 ]; then
