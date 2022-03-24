@@ -117,11 +117,14 @@ function write_mycnf() {
   # $4: password
   local socketcomment=""
   [ -z "$2" ] && socketcomment="#"
+  local hostcomment=""
+  [ -z "$3" ] && hostcomment="#"
   cat > "${1}" <<EOF
 [client]
 ${socketcomment}socket=$2
-user=$3
-password=$4
+${hostcomment}host=$3
+user=$4
+password=$5
 EOF
 }
 
@@ -181,8 +184,13 @@ check_for_plesk_passwords () {
 ## -- Check for the existance of plesk and login using its credentials -- ##
 
   if [ -f /etc/psa/.psa.shadow ] ; then
-    MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
-    MYSQLADMIN_COMMAND="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+    if [ "$socket" != "" ]; then
+      local MYSQL_COMMAND_PARAMS="-S$socket -uadmin"
+    else
+      local MYSQL_COMMAND_PARAMS="-h$host -uadmin"
+    fi
+    MYSQL_COMMAND="mysql $MYSQL_COMMAND_PARAMS -p$(cat /etc/psa/.psa.shadow)"
+    MYSQLADMIN_COMMAND="mysqladmin $MYSQL_COMMAND_PARAMS-p$(cat /etc/psa/.psa.shadow)"
   fi
 }
 
@@ -229,10 +237,11 @@ function second_login_failed()
   cecho "Could not auto detect login info!"
   cecho "Found potential sockets: $found_socks"
   cecho "Using: $socket" red
-  read -p "Would you like to provide a different socket?: [y/N] " REPLY
+  read -p "Would you like to provide a different socket/host?: [y/N] " REPLY
     case $REPLY in 
       yes | y | Y | YES)
       read -p "Socket: " socket
+      read -p "Host: " host
       ;;
     esac
   read -p "Do you have your login handy ? [y/N] : " REPLY
@@ -242,7 +251,11 @@ function second_login_failed()
     read -p "User: " user
     read -rsp "Password: " pass
 
-    local MYSQL_COMMAND_PARAMS="-S $socket -u$user"
+    if [ "$socket" != "" ]; then
+      local MYSQL_COMMAND_PARAMS="-S$socket -u$user"
+    else
+      local MYSQL_COMMAND_PARAMS="-h$host -u$user"
+    fi
     export MYSQL_COMMAND="mysql $MYSQL_COMMAND_PARAMS"
     export MYSQLADMIN_COMMAND="mysqladmin $MYSQL_COMMAND_PARAMS"
 
@@ -260,7 +273,7 @@ function second_login_failed()
     answer2='yes'
     if [ ! -f ~/.my.cnf ] ; then
       umask 077
-      write_mycnf "${HOME}/.my.cnf" "$socket" "$user" "$pass"
+      write_mycnf "${HOME}/.my.cnf" "$socket" "$host" "$user" "$pass"
       if [ "$answer1" != 'yes' ] ; then
         exit 1
       else
@@ -273,7 +286,7 @@ function second_login_failed()
       printf "\n"
       read -p "Replace ? [y/N] : " REPLY
       if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ] ; then 
-        write_mycnf "${HOME}/.my.cnf" "$socket" "$user" "$pass"
+        write_mycnf "${HOME}/.my.cnf" "$socket" "$host" "$user" "$pass"
         if [ "$answer1" != 'yes' ] ; then
           exit 1
         else
@@ -292,7 +305,7 @@ function second_login_failed()
     else
       local tempmycnf
       tempmycnf="$(mktemp)"
-      write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
+      write_mycnf "$tempmycnf" "$socket" "$host" "$user" "$pass"
       export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
       export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
       final_login_attempt
@@ -314,7 +327,7 @@ find_webmin_passwords () {
                         cecho "Setting login info as User: $user Password: $pass"
                         touch ~/.my.cnf
                         chmod 600 ~/.my.cnf
-                        write_mycnf "${HOME}/.my.cnf" "" "$user" "$pass"
+                        write_mycnf "${HOME}/.my.cnf" "" "" "$user" "$pass"
                         cecho "Retrying login"
                         is_up=$($MYSQLADMIN_COMMAND ping 2>&1)
                         if [ "$is_up" = "mysqld is alive"  ] ; then
@@ -1513,16 +1526,24 @@ prompt () {
         read -p "Username [anonymous] : " user
         read -rsp "Password [<none>] : " pass
         cecho " "
-        read -p "Socket [ /var/lib/mysql/mysql.sock ] : " socket
-        if [ -z $socket ] ; then
-                export socket='/var/lib/mysql/mysql.sock'
+        read -p "Socket : " socket
+        if [ "$socket" = "" ]; then
+          read -p "Host : " host
         fi
+        #if [ -z $socket ] ; then
+        #        export socket='/var/lib/mysql/mysql.sock'
+        #fi
 
         local tempmycnf
         tempmycnf="$(mktemp)"
-        write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
+        write_mycnf "$tempmycnf" "$socket" "$host" "$user" "$pass"
 
-        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -S $socket -u$user"
+        if [ "$socket" != "" ]; then
+          local MYSQL_COMMAND_PARAMS="-S$socket -u$user"
+        else
+          local MYSQL_COMMAND_PARAMS="-h$host -u$user"
+        fi
+        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
         export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -S $socket -u$user" 
 
         check_for_socket || \
