@@ -117,11 +117,13 @@ function write_mycnf() {
   # $4: password
   local socketcomment=""
   [ -z "$2" ] && socketcomment="#"
+  local cleanpassword="${4//\\/\\\\}"
+  cleanpassword="${cleanpassword//\"/\\\"}"
   cat > "${1}" <<EOF
 [client]
 ${socketcomment}socket=$2
 user=$3
-password=$4
+password="${cleanpassword}"
 EOF
 }
 
@@ -227,24 +229,27 @@ final_login_attempt () {
 function second_login_failed()
 {
   cecho "Could not auto detect login info!"
-  cecho "Found potential sockets: $found_socks"
-  cecho "Using: $socket" red
-  read -p "Would you like to provide a different socket?: [y/N] " REPLY
+  cecho "Found potential sockets: $(xargs <<< "$found_socks")"
+  if [ -z "$socket" ]; then
+    cecho "  Will use client's default socket (this is normally correct)." bold
+  else
+    cecho "  Choosing: $socket" red
+  fi
+  read -rp "Would you like to override my socket choice?: [y/N] " REPLY
     case $REPLY in 
       yes | y | Y | YES)
-      read -p "Socket: " socket
+      read -rp "Socket: " socket
       ;;
     esac
-  read -p "Do you have your login handy ? [y/N] : " REPLY
+  read -rp "Do you have your login handy ? [y/N] : " REPLY
   case $REPLY in 
     yes | y | Y | YES)
     answer1='yes'
-    read -p "User: " user
+    read -rp "User: " user
     read -rsp "Password: " pass
 
-    local MYSQL_COMMAND_PARAMS="-S $socket -u$user"
-    export MYSQL_COMMAND="mysql $MYSQL_COMMAND_PARAMS"
-    export MYSQLADMIN_COMMAND="mysqladmin $MYSQL_COMMAND_PARAMS"
+    export MYSQL_COMMAND="mysql"
+    export MYSQLADMIN_COMMAND="mysqladmin"
 
     ;;
     *)
@@ -1522,8 +1527,8 @@ prompt () {
         tempmycnf="$(mktemp)"
         write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
 
-        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -S $socket -u$user"
-        export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -S $socket -u$user" 
+        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -u$user"
+        export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -u$user"
 
         check_for_socket || \
         check_mysql_login
