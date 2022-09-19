@@ -19,7 +19,7 @@ This script takes information from `SHOW STATUS LIKE...` and `SHOW VARIABLES LIK
 
 It (attempts to be!) compatible with all versions of MySQL 3.23 and higher (including 5.x), as well as MariaDB, and Percona Server for MySQL.&sup2;
 
-Currently it handles recomendations for the following:
+Currently it handles recommendations for the following:
 
 * Slow Query Log
 * Max Connections
