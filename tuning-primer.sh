@@ -763,9 +763,6 @@ check_key_buffer_size () {
 }
 
 check_query_cache () {
-
-## -- Query Cache -- ##
-
         cecho "QUERY CACHE" boldblue
 
         mysql_variable \'version\' mysql_version
@@ -778,17 +775,18 @@ check_query_cache () {
         mysql_status \'Qcache_lowmem_prunes\' qcache_lowmem_prunes
 
         if [ -z $query_cache_size ] ; then
-                cecho "You are using MySQL $mysql_version, no query cache is supported." red
-                cecho "I recommend an upgrade to MySQL 4.1 or better" red
+                cecho "Your server does not support the query cache.  That's probably a good thing." green
         elif [ $query_cache_size -eq 0 ] ; then
-                cecho "Query cache is supported but not enabled" red
-                cecho "Perhaps you should set the query_cache_size" red
+                cecho "Query cache is supported, but not enabled." yellow
+                cecho "Determine if enabling cache is advisable given your load characteristics," yellow
+                cecho "daemon version, and SMP (multiprocessor) status." black
         else
                 qcache_used_memory=$(($query_cache_size-$qcache_free_memory))
                 qcache_mem_fill_ratio=$(echo "scale=2; $qcache_used_memory * 100 / $query_cache_size" | bc -l)
                 qcache_mem_fill_ratioHR=$(echo "scale=0; $qcache_mem_fill_ratio / 1" | bc -l)
 
-                cecho "Query cache is enabled" green
+                cecho "You have query cache enabled.  With many versions of the server, you may see" yellow
+                cecho "query cache lock contention, especially if you have more than one core." yellow
                 human_readable $query_cache_size query_cache_sizeHR
                 cecho "Current query_cache_size = $query_cache_sizeHR $unit"
                 human_readable $qcache_used_memory qcache_used_memoryHR
@@ -824,7 +822,6 @@ check_query_cache () {
                 fi
                 cecho "MySQL won't cache query results that are larger than query_cache_limit in size" yellow
         fi
-
 }
 
 check_sort_operations () {
