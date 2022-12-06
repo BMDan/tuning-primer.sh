@@ -1452,8 +1452,13 @@ get_system_info () {
     elif [ "$OS" = 'Linux' ] ; then
         ## Includes SWAP
         ## export physical_memory=$(free -b | grep -v buffers |  awk '{ s += $2 } END { printf("%.0f\n", s ) }')
-        ps_socket=$(netstat -ln | awk '/mysql(.*)?\.sock/ { print $9 }' | head -1)
-        found_socks=$(netstat -ln | awk '/mysql(.*)?\.sock/ { print $9 }')
+        if command -v netstat 2>/dev/null >/dev/null; then
+          ps_socket=$(netstat -ln | awk '/mysql(.*)?\.sock/ { print $9 }' | head -1)
+          found_socks=$(netstat -ln | awk '/mysql(.*)?\.sock/ { print $9 }')
+        else
+          ps_socket=$(ss -ln 2>/dev/null | awk '/mysql(.*)?\.sock/ { print $5; exit }')
+          ps_socket=$(ss -ln 2>/dev/null | awk '/mysql(.*)?\.sock/ { print $5 }')
+        fi
         export physical_memory=$(awk '/^MemTotal/ { printf("%.0f", $2*1024 ) }' < /proc/meminfo)
         export duflags='-b'
     elif [ "$OS" = 'SunOS' ] ; then
