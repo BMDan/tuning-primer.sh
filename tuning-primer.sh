@@ -590,7 +590,7 @@ check_binary_log () {
                 if [ -z "$max_binlog_size" ] ; then
                         cecho "The max_binlog_size is not set. The binary log will rotate when it reaches 1GB." red
                 fi
-                if [ "$expire_logs_days" -eq 0 ] ; then
+                if [ "${expire_logs_days//.}" -eq 0 ] ; then  # Turns 0.000 -> 0000.
                         cecho "The expire_logs_days is not set." boldred
                         cechon "The mysqld will retain the entire binary log until " red
                         cecho "RESET MASTER or PURGE MASTER LOGS commands are run manually" red
