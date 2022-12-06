@@ -705,8 +705,8 @@ check_key_buffer_size () {
         fi
 
         if [ $key_reads -eq 0 ] ; then
-                cecho "No key reads?!" boldred
-                cecho "Seriously look into using some indexes" red
+                cecho "No key reads.  If you aren't using MyISAM, this is normal.  If you are" yellow
+                cecho "using MyISAM, this is very, very bad." yellow
                 key_cache_miss_rate=0
                 key_buffer_free=$(echo "$key_blocks_unused * $key_cache_block_size / $key_buffer_size * 100" | bc -l )
                 key_buffer_freeRND=$(echo "scale=0; $key_buffer_free / 1" | bc -l)
