@@ -1,11 +1,11 @@
 # MySQL Tuning-Primer.sh
 ## How to use
-Download and run <a href="https://raw.githubusercontent.com/BMDan/tuning-primer.sh/master/tuning-primer.sh">tuning-primer.sh</a>.
+Download and run <a href="https://raw.githubusercontent.com/BMDan/tuning-primer.sh/main/tuning-primer.sh">tuning-primer.sh</a>.
 
 If you _don't_ like downloading anything and you _do_ like living dangerously, you could instead run it with something like this&sup1;:
 
 ```bash
-curl -L https://raw.githubusercontent.com/BMDan/tuning-primer.sh/master/tuning-primer.sh | bash
+curl -L https://raw.githubusercontent.com/BMDan/tuning-primer.sh/main/tuning-primer.sh | bash
 ```
 
 ## About this repository
@@ -41,7 +41,7 @@ Currently it handles recommendations for the following:
 * Better handling of terminals and redirection (got rid of the hardcoded color sequences, switched to proper terminfo)
 * <a href="https://github.com/BMDan/tuning-primer.sh/commit/6b5d866f7525b250bb4ecb0deffd66531e375143">Fixed</a> the old ``./tuning-primer.sh: line 402: export: `2097152': not a valid identifier`` bug
 
-More, as always, in the <a href="https://github.com/BMDan/tuning-primer.sh/commits/master">changelog</a>.
+More, as always, in the <a href="https://github.com/BMDan/tuning-primer.sh/commits/main">changelog</a>.
 
 ---
 ### Legal Stuff
