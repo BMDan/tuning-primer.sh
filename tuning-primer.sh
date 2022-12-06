@@ -797,7 +797,7 @@ check_query_cache () {
                 cecho "Current query_cache_limit = $query_cache_limitHR $unit"
                 cecho "Current Query cache Memory fill ratio = $qcache_mem_fill_ratio %"
                 if [ -z $query_cache_min_res_unit ] ; then
-                        cecho "No query_cache_min_res_unit is defined.  Using MySQL < 4.1 cache fragmentation can be inpredictable" %yellow
+                        cecho "No query_cache_min_res_unit is defined.  Using MySQL < 4.1 cache fragmentation can be inpredictable" yellow
                 else
                         human_readable $query_cache_min_res_unit query_cache_min_res_unitHR 
                         cecho "Current query_cache_min_res_unit = $query_cache_min_res_unitHR $unit"
