@@ -521,8 +521,9 @@ post_uptime_warning () {
         cecho "UNSUPPORTED MYSQL VERSION" boldred
         exit 1
         fi
-        cecho "Visit http://www.mysql.com/products/enterprise/advisors.html" boldblue
-        cecho "for info about MySQL's Enterprise Monitoring and Advisory Service" boldblue
+        echo ""
+        cecho "Visit https://github.com/BMDan/tuning-primer.sh for the latest version of" boldblue
+        cecho "this script, or to suggest improvements." boldblue
 }
 
 check_slow_queries () {
