@@ -492,7 +492,7 @@ post_uptime_warning () {
 
         mysql_status \'Uptime\' uptime
         mysql_status \'Threads_connected\' threads
-        queries_per_sec=$(($questions/$uptime))
+        queries_per_sec="$(($questions/$uptime)).$(printf '%02d' $((100*$questions/$uptime%100)))"
         human_readable_time $uptime uptimeHR
 
         cecho "Uptime = $uptimeHR"
