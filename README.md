@@ -15,7 +15,7 @@ This is the script originally developed by Matthew Montgomery, and previously ho
 This repository will be used to handle ongoing development and bugfixes for this script.  Please file bug reports <a href="https://github.com/BMDan/tuning-primer.sh/issues">here</a>.  Pull requests are welcomed.
 
 ## About this script
-This script takes information from `SHOW STATUS LIKE...` and `SHOW VARIABLES LIKE...` to produce sane recomendations for tuning server variables. 
+This script takes information from `SHOW STATUS LIKE...` and `SHOW VARIABLES LIKE...` to produce sane recommendations for tuning server variables.
 
 It (attempts to be!) compatible with all versions of MySQL 3.23 and higher (including 5.x), as well as MariaDB, and Percona Server for MySQL.&sup2;
 

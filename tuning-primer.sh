@@ -4,7 +4,7 @@
 #########################################################################
 #                                                                       #
 #       MySQL performance tuning primer script                          #
-#       Writen by: Matthew Montgomery and Dan Reif                      #
+#       Written by: Matthew Montgomery and Dan Reif                     #
 #       Report bugs to: https://github.com/BMDan/tuning-primer.sh/issues#
 #       Inspired by: MySQLARd (http://gert.sos.be/demo/mysqlar/)        #
 #       Version: 1.99           Released: 2018-06-10                    #
@@ -180,7 +180,7 @@ function check_for_socket()
 
 check_for_plesk_passwords () {
 
-## -- Check for the existance of plesk and login using its credentials -- ##
+## -- Check for the existence of plesk and login using its credentials -- ##
 
   if [ -f /etc/psa/.psa.shadow ] ; then
     MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
@@ -917,7 +917,7 @@ check_join_operations () {
                 raise_buffer='true'
         fi
 
-        ## For Debuging ##
+        ## For Debugging ##
         # print_error='true'
         if [ $join_buffer_size -ge 4194304 ] ; then
                 cecho "join_buffer_size >= 4 M" boldred
@@ -1005,7 +1005,7 @@ check_open_files () {
         if [ $open_files_ratio -ge 75 ] ; then
                 cecho "You currently have open more than 75% of your open_files_limit" boldred
                 if [ $cant_override -eq 1 ] ; then
-                        cecho "You should set a higer value for ulimit -u in the mysql startup script then restart mysqld" boldred
+                        cecho "You should set a higher value for ulimit -u in the mysql startup script then restart mysqld" boldred
                         cecho "MySQL 3.23 users : This is just a guess based upon the current shell's ulimit -u value" yellow
                 elif [ $cant_override -eq 0 ] ; then
                         cecho "You should set a higher value for open_files_limit in my.cnf" boldred
@@ -1547,7 +1547,7 @@ prompt () {
                 banner | BANNER | header | HEADER | head | HEAD)
                 banner_info 
                 ;;
-                misc | MISC | miscelaneous )
+                misc | MISC | miscellaneous )
                 misc
                 ;;
                 mem | memory |  MEM | MEMORY )
@@ -1598,7 +1598,7 @@ case $mode in
   banner | BANNER | header | HEADER | head | HEAD )
     banner_info
     ;;
-  misc | MISC | miscelaneous )
+  misc | MISC | miscellaneous )
     cecho " "
     misc
     ;;
