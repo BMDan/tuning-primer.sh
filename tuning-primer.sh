@@ -780,7 +780,7 @@ check_query_cache () {
         elif [ $query_cache_size -eq 0 ] ; then
                 cecho "Query cache is supported, but not enabled." yellow
                 cecho "Determine if enabling cache is advisable given your load characteristics," yellow
-                cecho "daemon version, and SMP (multiprocessor) status." black
+                cecho "daemon version, and SMP (multiprocessor) status." yellow
         else
                 qcache_used_memory=$(($query_cache_size-$qcache_free_memory))
                 qcache_mem_fill_ratio=$(echo "scale=2; $qcache_used_memory * 100 / $query_cache_size" | bc -l)
