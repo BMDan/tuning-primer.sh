@@ -1,0 +1,80 @@
+---
+files: (?x)^(.*\.(php|py|pl|pm|json|md|sh|yaml|cfg|txt)|[^/]* )$
+exclude: (?x)^((LICENCE$))
+repos:
+  - repo: local
+    hooks:
+      - id: check-bash-syntax
+        name: Check Shell scripts syntax correctness
+        language: system
+        entry: bash -n
+        files: \.sh$
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+  - repo: https://github.com/lovesegfault/beautysh.git
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
+        args: [--indent-size,"2"]
+        additional_dependencies: [setuptools]
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        name: Format Markdown
+        entry: mdformat  # Executable to run, with fixed options
+        language: python
+        stages: [manual]
+        types: [markdown]
+        args: [--wrap, '75', --number]
+        additional_dependencies: [mdformat-toc, mdformat-gfm]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: no-commit-to-branch
+        args: [--branch, dummy]
+      - id: check-yaml
+        args: [--unsafe]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-json
+      - id: mixed-line-ending
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.36.0
+    hooks:
+      - id: yamllint
+        args:
+          - --no-warnings
+          - -d
+          - '{extends: relaxed, rules: {line-length: {max: 120}}}'
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        exclude: (LICENSE)$
+        # args: [--toml, pyproject.toml]
+        # additional_dependencies:
+        #  - tomli
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^[^\.].*\.sh$
+        # Change the entry to make this work on cygwin
+        args:
+          - -x
+          - -e
+          - SC2012
+          - -e
+          - SC2154
+          - -e
+          - SC2155
+          - -e
+          - SC2162
