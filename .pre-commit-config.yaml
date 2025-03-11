@@ -10,7 +10,7 @@ repos:
         entry: bash -n
         files: \.sh$
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.1
+    rev: v1.5.5
     hooks:
       - id: remove-tabs
   - repo: https://github.com/lovesegfault/beautysh.git
@@ -19,7 +19,7 @@ repos:
       - id: beautysh
         args: [--indent-size,"2"]
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+    rev: 0.7.22
     hooks:
       - id: mdformat
         name: Format Markdown
@@ -30,7 +30,7 @@ repos:
         args: [--wrap, '75', --number]
         additional_dependencies: [mdformat-toc, mdformat-gfm]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: no-commit-to-branch
         args: [--branch, dummy]
@@ -46,7 +46,7 @@ repos:
       - id: fix-byte-order-marker
       - id: check-case-conflict
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.32.0
+    rev: v1.36.0
     hooks:
       - id: yamllint
         args:
@@ -54,7 +54,7 @@ repos:
           - -d
           - '{extends: relaxed, rules: {line-length: {max: 120}}}'
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.4.1
     hooks:
       - id: codespell
         exclude: (LICENSE)$
@@ -62,7 +62,7 @@ repos:
         # additional_dependencies:
         #  - tomli
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.5
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         files: ^[^\.].*\.sh$
