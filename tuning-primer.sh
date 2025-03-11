@@ -209,7 +209,7 @@ check_mysql_login () {
   printf "\n"
   cecho "Using login values from ~/.my.cnf"
   cecho "- INITIAL LOGIN ATTEMPT FAILED -" boldred
-  if [ -z $prompted ] ; then
+  if [ -z "$prompted" ] ; then
     find_webmin_passwords
   fi
   return 1
@@ -274,6 +274,7 @@ function second_login_failed()
         fi
       else
         printf "\n"
+        # shellcheck disable=2088
         cecho "~/.my.cnf already exists!" boldred
         printf "\n"
         read -p "Replace ? [y/N] : " REPLY
@@ -315,7 +316,7 @@ find_webmin_passwords () {
   if [ -f /etc/webmin/mysql/config ] ; then
     user=$(grep ^login= /etc/webmin/mysql/config | cut -d "=" -f 2)
     pass=$(grep ^pass= /etc/webmin/mysql/config | cut -d "=" -f 2)
-    if [  $user ] && [ $pass ] && [ ! -f ~/.my.cnf  ] ; then
+    if [ "$user" ] && [ "$pass" ] && [ ! -f ~/.my.cnf  ] ; then
       cecho "Setting login info as User: $user Password: $pass"
       touch ~/.my.cnf
       chmod 600 ~/.my.cnf
@@ -349,7 +350,7 @@ find_webmin_passwords () {
 
 mysql_status () {
   local status=$($MYSQL_COMMAND -Bse "show /*!50000 global */ status like $1" | awk '{ print $2 }')
-  export "$2"=$status
+  export "$2"="$status"
 }
 
 #########################################################################
@@ -365,25 +366,25 @@ mysql_status () {
 
 mysql_variable () {
   local variable=$($MYSQL_COMMAND -Bse "show /*!50000 global */ variables like $1" | awk '{ print $2 }')
-  export "$2"=$variable
+  export "$2"="$variable"
 }
 mysql_variableTSV () {
   local variable=$($MYSQL_COMMAND -Bse "show /*!50000 global */ variables like $1" | awk -F '\t' '{ print $2 }')
-  export "$2"=$variable
+  export "$2"="$variable"
 }
 
 # -- Divide two integers -- #
 function divide()
 {
   usage="$0 dividend divisor '$variable' scale"
-  if [ $1 -ge 1 ] ; then
+  if [ "$1" -ge 1 ] ; then
     dividend=$1
   else
     cecho "Invalid Dividend" red
     echo "$usage"
     exit 1
   fi
-  if [ $2 -ge 1 ] ; then
+  if [ "$2" -ge 1 ] ; then
     divisor=$2
   else
     cecho "Invalid Divisor" red
@@ -395,16 +396,16 @@ function divide()
     echo "$usage"
     exit 1
   fi
-  if [ -z $4 ] ; then
+  if [ -z "$4" ] ; then
     scale=2
-  elif [ $4 -ge 0 ] ; then
+  elif [ "$4" -ge 0 ] ; then
     scale=$4
   else
     cecho "Invalid scale" red
     echo "$usage"
     exit 1
   fi
-  export $3="$(echo "scale=$scale; $dividend / $divisor" | bc -l)"
+  export "$3"="$(echo "scale=$scale; $dividend / $divisor" | bc -l)"
 }
 
 human_readable () {
@@ -423,26 +424,26 @@ human_readable () {
   ## variable=$2
   scale=$3
 
-  if [ $1 -ge 1073741824 ] ; then
-    if [ -z $3 ] ; then
+  if [ "$1" -ge 1073741824 ] ; then
+    if [ -z "$3" ] ; then
       scale=2
     fi
-    divide $1 1073741824 "$2" $scale
+    divide "$1" 1073741824 "$2" "$scale"
     unit="G"
-  elif [ $1 -ge 1048576 ] ; then
-    if [ -z $3 ] ; then
+  elif [ "$1" -ge 1048576 ] ; then
+    if [ -z "$3" ] ; then
       scale=0
     fi
-    divide $1 1048576 "$2" $scale
+    divide "$1 "1048576 "$2" "$scale"
     unit="M"
-  elif [ $1 -ge 1024 ] ; then
-    if [ -z $3 ] ; then
+  elif [ "$1" -ge 1024 ] ; then
+    if [ -z "$3" ] ; then
       scale=0
     fi
-    divide $1 1024 "$2" $scale
+    divide "$1" 1024 "$2" "$scale"
     unit="K"
   else
-    export "$2"=$1
+    export "$2"="$1"
     unit="bytes"
   fi
   # let "$2"=$HR
@@ -456,12 +457,12 @@ function human_readable_time()
   local secs="${1%.*}"
   local subsecs="${1#"$secs"}"
 
-  if [ -z $1 ] || [ -z $2 ] ; then
+  if [ -z "$1" ] || [ -z "$2" ] ; then
     cecho "${FUNCNAME[0]} seconds 'variable'" red
     exit 1
   fi
 
-  export $2="$((secs/86400)) days $((secs/3600%24)) hrs $((secs/60%60)) min $((secs%60))$subsecs sec"
+  export "$2"="$((secs/86400)) days $((secs/3600%24)) hrs $((secs/60%60)) min $((secs%60))$subsecs sec"
 }
 
 check_mysql_version () {
@@ -492,8 +493,8 @@ post_uptime_warning () {
 
   mysql_status \'Uptime\' uptime
   mysql_status \'Threads_connected\' threads
-  queries_per_sec="$(($questions/$uptime)).$(printf '%02d' $((100*$questions/$uptime%100)))"
-  human_readable_time $uptime uptimeHR
+  queries_per_sec="$((questions/uptime)).$(printf '%02d' $((100*questions/uptime%100)))"
+  human_readable_time "$uptime" uptimeHR
 
   cecho "Uptime = $uptimeHR"
   cecho "Avg. qps = $queries_per_sec"
@@ -501,7 +502,7 @@ post_uptime_warning () {
   cecho "Threads Connected = $threads"
   echo
 
-  if [ $uptime -gt 172800 ] ; then
+  if [ "$uptime" -gt 172800 ] ; then
     cecho "Server has been running for over 48hrs."
     cecho "It should be safe to follow these recommendations"
   else
@@ -617,17 +618,17 @@ check_used_connections () {
   mysql_status \'Max_used_connections\' max_used_connections
   mysql_status \'Threads_connected\' threads_connected
 
-  connections_ratio=$(($max_used_connections*100/$max_connections))
+  connections_ratio=$((max_used_connections*100/max_connections))
 
   cecho "MAX CONNECTIONS" boldblue
   cecho "Current max_connections = $max_connections"
   cecho "Current threads_connected = $threads_connected"
   cecho "Historic max_used_connections = $max_used_connections"
   cechon "The number of used connections is "
-  if [ $connections_ratio -ge 85 ] ; then
+  if [ "$connections_ratio" -ge 85 ] ; then
     txt_color=red
     error=1
-  elif [ $connections_ratio -le 10 ] ; then
+  elif [ "$connections_ratio" -le 10 ] ; then
     txt_color=red
     error=2
   else
@@ -639,9 +640,9 @@ check_used_connections () {
   cechon "$connections_ratio% " $txt_color
   cecho "of the configured maximum."
 
-  if [ $error -eq 1 ] ; then
+  if [ "$error" -eq 1 ] ; then
     cecho "You should raise max_connections" $txt_color
-  elif [ $error -eq 2 ] ; then
+  elif [ "$error" -eq 2 ] ; then
     cecho "You are using less than 10% of your configured max_connections." $txt_color
     cecho "Lowering max_connections could help to avoid an over-allocation of memory" $txt_color
     cecho "See \"MEMORY USAGE\" section to make sure you are not over-allocating" $txt_color
@@ -665,18 +666,18 @@ check_threads() {
   mysql_status \'Uptime\' uptime
   mysql_variable \'thread_cache_size\' thread_cache_size
 
-  historic_threads_per_sec=$(($threads_created1/$uptime))
-  current_threads_per_sec=$(($threads_created2-$threads_created1))
+  historic_threads_per_sec=$((threads_created1/uptime))
+  current_threads_per_sec=$((threads_created2-threads_created1))
 
   cecho "Current thread_cache_size = $thread_cache_size"
   cecho "Current threads_cached = $threads_cached"
   cecho "Current threads_per_sec = $current_threads_per_sec"
   cecho "Historic threads_per_sec = $historic_threads_per_sec"
 
-  if [ $historic_threads_per_sec -ge 2 ] && [ $threads_cached -le 1 ] ; then
+  if [ "$historic_threads_per_sec" -ge 2 ] && [ "$threads_cached" -le 1 ] ; then
     cecho "Threads created per/sec are overrunning threads cached" red
     cecho "You should raise thread_cache_size" red
-  elif [ $current_threads_per_sec -ge 2 ] ; then
+  elif [ "$current_threads_per_sec" -ge 2 ] ; then
     cecho "Threads created per/sec are overrunning threads cached" red
     cecho "You should raise thread_cache_size" red
   else
@@ -700,18 +701,19 @@ check_key_buffer_size () {
   mysql_variable \'version_compile_machine\' mysql_version_compile_machine
   myisam_indexes=$($MYSQL_COMMAND -Bse "/*!50000 SELECT IFNULL(SUM(INDEX_LENGTH),0) from information_schema.TABLES where ENGINE='MyISAM' */")
 
-  if [ -z $myisam_indexes ] ; then
-    myisam_indexes=$(find $datadir -name '*.MYI' -exec du $duflags '{}' \; 2>&1 | awk '{ s += $1 } END { printf("%.0f\n", s )}')
+  if [ -z "$myisam_indexes" ] ; then
+    # shellcheck disable=2086
+    myisam_indexes=$(find "$datadir" -name '*.MYI' -exec du $duflags '{}' \; 2>&1 | awk '{ s += $1 } END { printf("%.0f\n", s )}')
   fi
 
-  if [ $key_reads -eq 0 ] ; then
+  if [ "$key_reads" -eq 0 ] ; then
     cecho "No key reads.  If you aren't using MyISAM, this is normal.  If you are" yellow
     cecho "using MyISAM, this is very, very bad." yellow
     key_cache_miss_rate=0
     key_buffer_free=$(echo "$key_blocks_unused * $key_cache_block_size / $key_buffer_size * 100" | bc -l )
     key_buffer_freeRND=$(echo "scale=0; $key_buffer_free / 1" | bc -l)
   else
-    key_cache_miss_rate=$(($key_read_requests/$key_reads))
+    key_cache_miss_rate=$((key_read_requests/key_reads))
     if [ -n "$key_blocks_unused" ] ; then
       key_buffer_free=$(echo "$key_blocks_unused * $key_cache_block_size / $key_buffer_size * 100" | bc -l )
       key_buffer_freeRND=$(echo "scale=0; $key_buffer_free / 1" | bc -l)
@@ -721,41 +723,41 @@ check_key_buffer_size () {
     fi
   fi
 
-  human_readable $myisam_indexes myisam_indexesHR
+  human_readable "$myisam_indexes" myisam_indexesHR
   cecho "Current MyISAM index space = $myisam_indexesHR $unit"
 
-  human_readable  $key_buffer_size key_buffer_sizeHR
+  human_readable "$key_buffer_size" key_buffer_sizeHR
   cecho "Current key_buffer_size = $key_buffer_sizeHR $unit"
   cecho "Key cache miss rate is 1 : $key_cache_miss_rate"
   cecho "Key buffer free ratio = $key_buffer_freeRND %"
 
-  if [ "$major_version" = '5.1' ] && [ $mysql_version_num -lt 050123 ] ; then
-    if [ $key_buffer_size -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q $mysql_version_compile_machine ) ; then
+  if [ "$major_version" = '5.1' ] && [ "$mysql_version_num" -lt 050123 ] ; then
+    if [ "$key_buffer_size" -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q "$mysql_version_compile_machine" ) ; then
       cecho "Using key_buffer_size > 4GB will cause instability in versions prior to 5.1.23 " boldred
       cecho "See Bug#5731, Bug#29419, Bug#29446" boldred
     fi
   fi
-  if [ "$major_version" = '5.0' ] && [ $mysql_version_num -lt 050052 ] ; then
-    if [ $key_buffer_size -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q $mysql_version_compile_machine ) ; then
+  if [ "$major_version" = '5.0' ] && [ "$mysql_version_num" -lt 050052 ] ; then
+    if [ "$key_buffer_size" -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q "$mysql_version_compile_machine" ) ; then
       cecho "Using key_buffer_size > 4GB will cause instability in versions prior to 5.0.52 " boldred
       cecho "See Bug#5731, Bug#29419, Bug#29446" boldred
     fi
   fi
-  if { [ "$major_version" = '4.1' ] || [ "$major_version" = '4.0' ]; } && [ $key_buffer_size -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q $mysql_version_compile_machine ) ; then
+  if { [ "$major_version" = '4.1' ] || [ "$major_version" = '4.0' ]; } && [ "$key_buffer_size" -ge 4294967296 ] && ( echo "x86_64 ppc64 ia64 sparc64 i686" | grep -q "$mysql_version_compile_machine" ) ; then
     cecho "Using key_buffer_size > 4GB will cause instability in versions prior to 5.0.52 " boldred
     cecho "Reduce key_buffer_size to a safe value" boldred
     cecho "See Bug#5731, Bug#29419, Bug#29446" boldred
   fi
 
-  if [ $key_cache_miss_rate -le 100 ] && [ $key_cache_miss_rate -gt 0 ] && [ $key_buffer_freeRND -le 20 ]; then
+  if [ "$key_cache_miss_rate" -le 100 ] && [ "$key_cache_miss_rate" -gt 0 ] && [ "$key_buffer_freeRND" -le 20 ]; then
     cecho "You could increase key_buffer_size" boldred
     cecho "It is safe to raise this up to 1/4 of total system memory;"
     cecho "assuming this is a dedicated database server."
-  elif [ $key_buffer_freeRND -le 20 ] && [ $key_buffer_size -le $myisam_indexes ] ; then
+  elif [ "$key_buffer_freeRND" -le 20 ] && [ "$key_buffer_size" -le "$myisam_indexes" ] ; then
     cecho "You could increase key_buffer_size" boldred
     cecho "It is safe to raise this up to 1/4 of total system memory;"
     cecho "assuming this is a dedicated database server."
-  elif [ $key_cache_miss_rate -ge 10000 ] || [ $key_buffer_freeRND -le 50  ] ; then
+  elif [ "$key_cache_miss_rate" -ge 10000 ] || [ "$key_buffer_freeRND" -le 50  ] ; then
     cecho "Your key_buffer_size seems to be too high." red
     cecho "Perhaps you can use these resources elsewhere" red
   else
@@ -775,47 +777,47 @@ check_query_cache () {
   mysql_status \'Qcache_free_blocks\' qcache_free_blocks
   mysql_status \'Qcache_lowmem_prunes\' qcache_lowmem_prunes
 
-  if [ -z $query_cache_size ] ; then
+  if [ -z "$query_cache_size" ] ; then
     cecho "Your server does not support the query cache.  That's probably a good thing." green
-  elif [ $query_cache_size -eq 0 ] ; then
+  elif [ "$query_cache_size" -eq 0 ] ; then
     cecho "Query cache is supported, but not enabled." yellow
     cecho "Determine if enabling cache is advisable given your load characteristics," yellow
     cecho "daemon version, and SMP (multiprocessor) status." yellow
   else
-    qcache_used_memory=$(($query_cache_size-$qcache_free_memory))
+    qcache_used_memory=$((query_cache_size-qcache_free_memory))
     qcache_mem_fill_ratio=$(echo "scale=2; $qcache_used_memory * 100 / $query_cache_size" | bc -l)
     qcache_mem_fill_ratioHR=$(echo "scale=0; $qcache_mem_fill_ratio / 1" | bc -l)
 
     cecho "You have query cache enabled.  With many versions of the server, you may see" yellow
     cecho "query cache lock contention, especially if you have more than one core." yellow
-    human_readable $query_cache_size query_cache_sizeHR
+    human_readable "$query_cache_size" query_cache_sizeHR
     cecho "Current query_cache_size = $query_cache_sizeHR $unit"
-    human_readable $qcache_used_memory qcache_used_memoryHR
+    human_readable "$qcache_used_memory" qcache_used_memoryHR
     cecho "Current query_cache_used = $qcache_used_memoryHR $unit"
-    human_readable $query_cache_limit query_cache_limitHR
+    human_readable "$query_cache_limit" query_cache_limitHR
     cecho "Current query_cache_limit = $query_cache_limitHR $unit"
     cecho "Current Query cache Memory fill ratio = $qcache_mem_fill_ratio %"
-    if [ -z $query_cache_min_res_unit ] ; then
+    if [ -z "$query_cache_min_res_unit" ] ; then
       cecho "No query_cache_min_res_unit is defined.  Using MySQL < 4.1 cache fragmentation can be inpredictable" yellow
     else
-      human_readable $query_cache_min_res_unit query_cache_min_res_unitHR
+      human_readable "$query_cache_min_res_unit" query_cache_min_res_unitHR
       cecho "Current query_cache_min_res_unit = $query_cache_min_res_unitHR $unit"
     fi
-    if [ $qcache_free_blocks -gt 2 ] && [ $qcache_total_blocks -gt 0 ] ; then
+    if [ "$qcache_free_blocks" -gt 2 ] && [ "$qcache_total_blocks" -gt 0 ] ; then
       qcache_percent_fragmented=$(echo "scale=2; $qcache_free_blocks * 100 / $qcache_total_blocks" | bc -l)
       qcache_percent_fragmentedHR=$(echo "scale=0; $qcache_percent_fragmented / 1" | bc -l)
-      if [ $qcache_percent_fragmentedHR -gt 20 ] ; then
+      if [ "$qcache_percent_fragmentedHR" -gt 20 ] ; then
         cecho "Query Cache is $qcache_percent_fragmentedHR % fragmented" red
         cecho "Run \"FLUSH QUERY CACHE\" periodically to defragment the query cache memory" red
         cecho "If you have many small queries lower 'query_cache_min_res_unit' to reduce fragmentation." red
       fi
     fi
 
-    if [ $qcache_mem_fill_ratioHR -le 25 ] ; then
+    if [ "$qcache_mem_fill_ratioHR" -le 25 ] ; then
       cecho "Your query_cache_size seems to be too high." red
       cecho "Perhaps you can use these resources elsewhere" red
     fi
-    if [ $qcache_lowmem_prunes -ge 50 ] && [ $qcache_mem_fill_ratioHR -ge 80 ]; then
+    if [ "$qcache_lowmem_prunes" -ge 50 ] && [ "$qcache_mem_fill_ratioHR" -ge 80 ]; then
       cechon "However, "
       cechon "$qcache_lowmem_prunes " boldred
       cecho "queries have been removed from the query cache due to lack of memory"
@@ -837,19 +839,19 @@ check_sort_operations () {
   mysql_variable \'sort_buffer_size\' sort_buffer_size
   mysql_variable \'read_rnd_buffer_size\' read_rnd_buffer_size
 
-  total_sorts=$(($sort_scan+$sort_range))
-  if [ -z $read_rnd_buffer_size ] ; then
+  total_sorts=$((sort_scan+sort_range))
+  if [ -z "$read_rnd_buffer_size" ] ; then
     mysql_variable \'record_buffer\' read_rnd_buffer_size
   fi
 
   ## Correct for rounding error in mysqld where 512K != 524288 ##
-  sort_buffer_size=$(($sort_buffer_size+8))
-  read_rnd_buffer_size=$(($read_rnd_buffer_size+8))
+  sort_buffer_size=$((sort_buffer_size+8))
+  read_rnd_buffer_size=$((read_rnd_buffer_size+8))
 
-  human_readable $sort_buffer_size sort_buffer_sizeHR
+  human_readable "$sort_buffer_size" sort_buffer_sizeHR
   cecho "Current sort_buffer_size = $sort_buffer_sizeHR $unit"
 
-  human_readable $read_rnd_buffer_size read_rnd_buffer_sizeHR
+  human_readable "$read_rnd_buffer_size" read_rnd_buffer_sizeHR
   cechon "Current "
   if [ "$major_version" = '3.23' ] ; then
     cechon "record_rnd_buffer "
@@ -858,17 +860,17 @@ check_sort_operations () {
   fi
   cecho "= $read_rnd_buffer_sizeHR $unit"
 
-  if [ $total_sorts -eq 0 ] ; then
+  if [ "$total_sorts" -eq 0 ] ; then
     cecho "No sort operations have been performed"
     passes_per_sort=0
   fi
-  if [ $sort_merge_passes -ne 0 ] ; then
-    passes_per_sort=$(($sort_merge_passes/$total_sorts))
+  if [ "$sort_merge_passes" -ne 0 ] ; then
+    passes_per_sort=$((sort_merge_passes/total_sorts))
   else
     passes_per_sort=0
   fi
 
-  if [ $passes_per_sort -ge 2 ] ; then
+  if [ "$passes_per_sort" -ge 2 ] ; then
     cechon "On average "
     cechon "$passes_per_sort " boldred
     cecho "sort merge passes are made per sort operation"
@@ -897,21 +899,21 @@ check_join_operations () {
   ## Some 4K is dropped from join_buffer_size adding it back to make sane ##
   ## handling of human-readable conversion ##
 
-  join_buffer_size=$(($join_buffer_size+4096))
+  join_buffer_size=$((join_buffer_size+4096))
 
-  human_readable $join_buffer_size join_buffer_sizeHR 2
+  human_readable "$join_buffer_size" join_buffer_sizeHR 2
 
   cecho "Current join_buffer_size = $join_buffer_sizeHR $unit"
   cecho "You have had $select_full_join queries where a join could not use an index properly"
 
-  if [ $select_range_check -eq 0 ] && [ $select_full_join -eq 0 ] ; then
+  if [ "$select_range_check" -eq 0 ] && [ "$select_full_join" -eq 0 ] ; then
     cecho "Your joins seem to be using indexes properly" green
   fi
-  if [ $select_full_join -gt 0 ] ; then
+  if [ "$select_full_join" -gt 0 ] ; then
     print_error='true'
     raise_buffer='true'
   fi
-  if [ $select_range_check -gt 0 ] ; then
+  if [ "$select_range_check" -gt 0 ] ; then
     cecho "You have had $select_range_check joins without keys that check for key usage after each row" red
     print_error='true'
     raise_buffer='true'
@@ -919,20 +921,20 @@ check_join_operations () {
 
   ## For Debugging ##
   # print_error='true'
-  if [ $join_buffer_size -ge 4194304 ] ; then
+  if [ "$join_buffer_size" -ge 4194304 ] ; then
     cecho "join_buffer_size >= 4 M" boldred
     cecho "This is not advised" boldred
     raise_buffer=
   fi
 
-  if [ $print_error ] ; then
+  if [ "$print_error" ] ; then
     if [ "$major_version" = '3.23' ] || [ "$major_version" = '4.0' ] ; then
       cecho "You should enable \"log-long-format\" "
     elif [ "$mysql_version_num" -gt 040100 ]; then
       cecho "You should enable \"log-queries-not-using-indexes\""
     fi
     cecho "Then look for non indexed joins in the slow query log."
-    if [ $raise_buffer ] ; then
+    if [ "$raise_buffer" ] ; then
       cecho "If you are unable to optimize your queries you may want to increase your"
       cecho "join_buffer_size to accommodate larger joins in one pass."
       printf "\n"
@@ -956,22 +958,22 @@ check_tmp_tables () {
   mysql_variable \'max_heap_table_size\' max_heap_table_size
 
 
-  if [ $created_tmp_tables -eq 0 ] ; then
+  if [ "$created_tmp_tables" -eq 0 ] ; then
     tmp_disk_tables=0
   else
     tmp_disk_tables=$((created_tmp_disk_tables*100/(created_tmp_tables+created_tmp_disk_tables)))
   fi
-  human_readable $max_heap_table_size max_heap_table_sizeHR
+  human_readable "$max_heap_table_size" max_heap_table_sizeHR
   cecho "Current max_heap_table_size = $max_heap_table_sizeHR $unit"
 
-  human_readable $tmp_table_size tmp_table_sizeHR
+  human_readable "$tmp_table_size" tmp_table_sizeHR
   cecho "Current tmp_table_size = $tmp_table_sizeHR $unit"
 
   cecho "Of $created_tmp_tables temp tables, $tmp_disk_tables% were created on disk"
-  if [ $tmp_table_size -gt $max_heap_table_size ] ; then
+  if [ "$tmp_table_size" -gt "$max_heap_table_size" ] ; then
     cecho "Effective in-memory tmp_table_size is limited to max_heap_table_size." yellow
   fi
-  if [ $tmp_disk_tables -ge 25 ] ; then
+  if [ "$tmp_disk_tables" -ge 25 ] ; then
     cecho "Perhaps you should increase your tmp_table_size and/or max_heap_table_size" boldred
     cecho "to reduce the number of disk-based temporary tables" boldred
     cecho "Note! BLOB and TEXT columns are not allowed in memory tables." yellow
@@ -990,7 +992,7 @@ check_open_files () {
   mysql_variable \'open_files_limit\' open_files_limit
   mysql_status   \'Open_files\' open_files
 
-  if [ -z $open_files_limit ] || [ $open_files_limit -eq 0 ] ; then
+  if [ -z "$open_files_limit" ] || [ "$open_files_limit" -eq 0 ] ; then
     open_files_limit=$(ulimit -n)
     cant_override=1
   else
@@ -998,16 +1000,16 @@ check_open_files () {
   fi
   cecho "Current open_files_limit = $open_files_limit files"
 
-  open_files_ratio=$(($open_files*100/$open_files_limit))
+  open_files_ratio=$((open_files*100/open_files_limit))
 
   cecho "The open_files_limit should typically be set to at least 2x-3x" yellow
   cecho "that of table_cache if you have heavy MyISAM usage." yellow
-  if [ $open_files_ratio -ge 75 ] ; then
+  if [ "$open_files_ratio" -ge 75 ] ; then
     cecho "You currently have open more than 75% of your open_files_limit" boldred
-    if [ $cant_override -eq 1 ] ; then
+    if [ "$cant_override" -eq 1 ] ; then
       cecho "You should set a higher value for ulimit -u in the mysql startup script then restart mysqld" boldred
       cecho "MySQL 3.23 users : This is just a guess based upon the current shell's ulimit -u value" yellow
-    elif [ $cant_override -eq 0 ] ; then
+    elif [ "$cant_override" -eq 0 ] ; then
       cecho "You should set a higher value for open_files_limit in my.cnf" boldred
     else
       cecho "ERROR can't determine if mysqld override of ulimit is allowed" boldred
@@ -1045,40 +1047,40 @@ check_table_cache () {
       cecho "You are not '$socket_owner' or 'root'" red
       cecho "I am unable to determine the table_count!" red
     else
-      table_count=$(find $datadir 2>&1 | grep -c .frm$)
+      table_count=$(find "$datadir" 2>&1 | grep -c .frm$)
     fi
   fi
-  if [ $table_open_cache ] ; then
+  if [ "$table_open_cache" ] ; then
     table_cache=$table_open_cache
   fi
 
-  if [ $opened_tables -ne 0 ] && [ $table_cache -ne 0 ] ; then
-    table_cache_hit_rate=$(($open_tables*100/$opened_tables))
-    table_cache_fill=$(($open_tables*100/$table_cache))
-  elif [ $opened_tables -eq 0 ] && [ $table_cache -ne 0 ] ; then
+  if [ "$opened_tables" -ne 0 ] && [ "$table_cache" -ne 0 ] ; then
+    table_cache_hit_rate=$((open_tables*100/opened_tables))
+    table_cache_fill=$((open_tables*100/table_cache))
+  elif [ "$opened_tables" -eq 0 ] && [ "$table_cache" -ne 0 ] ; then
     table_cache_hit_rate=100
-    table_cache_fill=$(($open_tables*100/$table_cache))
+    table_cache_fill=$((open_tables*100/table_cache))
   else
     cecho "ERROR no table_cache ?!" boldred
     exit 1
   fi
-  if [ $table_cache ] && [ ! $table_open_cache ] ; then
+  if [ "$table_cache" ] && [ ! "$table_open_cache" ] ; then
     cecho "Current table_cache value = $table_cache tables"
   fi
-  if [ $table_open_cache ] ; then
+  if [ "$table_open_cache" ] ; then
     cecho "Current table_open_cache = $table_open_cache tables"
     cecho "Current table_definition_cache = $table_definition_cache tables"
   fi
-  if [ $table_count ] ; then
+  if [ "$table_count" ] ; then
     cecho "You have a total of $table_count tables"
   fi
 
-  if  [ $table_cache_fill -lt 95 ] ; then
+  if  [ "$table_cache_fill" -lt 95 ] ; then
     cechon "You have "
     cechon "$open_tables " green
     cecho "open tables."
     cecho "The table_cache value seems to be fine" green
-  elif [ $table_cache_hit_rate -le 85 ] || [  $table_cache_fill -ge 95 ]; then
+  elif [ "$table_cache_hit_rate" -le 85 ] || [  $table_cache_fill -ge 95 ]; then
     cechon "You have "
     cechon "$open_tables " boldred
     cecho "open tables."
@@ -1096,7 +1098,7 @@ check_table_cache () {
     cecho "of your table cache is in use"
     cecho "The table cache value seems to be fine" green
   fi
-  if [ $table_definition_cache ] && [ $table_definition_cache -le $table_count ] && [ $table_count -ge 100 ] ; then
+  if [ "$table_definition_cache" ] && [ "$table_definition_cache" -le "$table_count" ] && [ "$table_count" -ge 100 ] ; then
     cecho "You should probably increase your table_definition_cache value." red
   fi
 }
@@ -1118,21 +1120,21 @@ check_table_locking () {
   fi
 
   cechon "Current Lock Wait ratio = "
-  if [ $table_locks_waited -gt 0 ]; then
-    immediate_locks_miss_rate=$(($table_locks_immediate/$table_locks_waited))
+  if [ "$table_locks_waited" -gt 0 ]; then
+    immediate_locks_miss_rate=$((table_locks_immediate/table_locks_waited))
     cecho "1 : $immediate_locks_miss_rate" red
   else
     immediate_locks_miss_rate=99999 # perfect
     cecho "0 : $questions"
   fi
-  if [ $immediate_locks_miss_rate -lt 5000 ] ; then
+  if [ "$immediate_locks_miss_rate" -lt 5000 ] ; then
     cecho "You may benefit from selective use of InnoDB."
     if [ "$low_priority_updates" = 'OFF' ] ; then
       cecho "If you have long-running SELECT's against MyISAM tables and perform"
       cecho "frequent updates consider setting 'low_priority_updates=1'"
     fi
     if [ "$mysql_version_num" -gt 050000 ] && [ "$mysql_version_num" -lt 050500 ]; then
-      if [ $concurrent_insert -le 1 ] ; then
+      if [ "$concurrent_insert" -le 1 ] ; then
         cecho "If you have a high concurrency of inserts on Dynamic row-length tables"
         cecho "consider setting 'concurrent_insert=2'."
       fi
@@ -1157,17 +1159,17 @@ check_table_scans () {
   mysql_status \'Handler_read_rnd_next\' read_rnd_next
   mysql_variable \'read_buffer_size\' read_buffer_size
 
-  if [ -z $read_buffer_size ] ; then
+  if [ -z "$read_buffer_size" ] ; then
     mysql_variable \'record_buffer\' read_buffer_size
   fi
 
-  human_readable $read_buffer_size read_buffer_sizeHR
+  human_readable "$read_buffer_size" read_buffer_sizeHR
   cecho "Current read_buffer_size = $read_buffer_sizeHR $unit"
 
-  if [ $com_select -gt 0 ] ; then
-    full_table_scans=$(($read_rnd_next/$com_select))
+  if [ "$com_select" -gt 0 ] ; then
+    full_table_scans=$((read_rnd_next/com_select))
     cecho "Current table scan ratio = $full_table_scans : 1"
-    if [ $full_table_scans -ge 4000 ] && [ $read_buffer_size -le 2097152 ] ; then
+    if [ "$full_table_scans" -ge 4000 ] && [ "$read_buffer_size" -le 2097152 ] ; then
       cecho "You have a high ratio of sequential access requests to SELECTs" red
       cechon "You may benefit from raising " red
       if [ "$major_version" = '3.23' ] ; then
@@ -1176,7 +1178,7 @@ check_table_scans () {
         cechon "read_buffer_size " red
       fi
       cecho "and/or improving your use of indexes." red
-    elif [ $read_buffer_size -gt 8388608 ] ; then
+    elif [ "$read_buffer_size" -gt 8388608 ] ; then
       cechon "read_buffer_size is over 8 MB " red
       cecho "there is probably no need for such a large read_buffer" red
 
@@ -1212,7 +1214,7 @@ function check_innodb_status()
     fi
   elif [ "$mysql_version_num" -ge 050500 ] && [ "$mysql_version_num" -lt 050512 ] ; then
     mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-    if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
+    if [ "$ignore_builtin_innodb" = "ON" ] || [ "$have_innodb" = "NO" ] ; then
       innodb_enabled=0
     else
       innodb_enabled=1
@@ -1226,7 +1228,7 @@ function check_innodb_status()
     fi
   elif [ "$mysql_version_num" -ge 050600 ] && [ "$mysql_version_num" -lt 050603 ] ; then
     mysql_variable \'ignore_builtin_innodb\' ignore_builtin_innodb
-    if [ "$ignore_builtin_innodb" = "ON" ] || [ $have_innodb = "NO" ] ; then
+    if [ "$ignore_builtin_innodb" = "ON" ] || [ "$have_innodb" = "NO" ] ; then
       innodb_enabled=0
     else
       innodb_enabled=1
@@ -1272,11 +1274,11 @@ function check_innodb_status()
       mysql_status \'Innodb_row_lock_time\' innodb_row_lock_time
       mysql_status \'Innodb_row_lock_waits\' innodb_row_lock_waits
 
-      human_readable $innodb_indexes innodb_indexesHR
+      human_readable "$innodb_indexes" innodb_indexesHR
       cecho "Current InnoDB index space = $innodb_indexesHR $unit"
-      human_readable $innodb_data innodb_dataHR
+      human_readable "$innodb_data" innodb_dataHR
       cecho "Current InnoDB data space = $innodb_dataHR $unit"
-      percent_innodb_buffer_pool_free=$(($innodb_buffer_pool_pages_free*100/$innodb_buffer_pool_pages_total))
+      percent_innodb_buffer_pool_free=$((innodb_buffer_pool_pages_free*100/innodb_buffer_pool_pages_total))
       cecho "Current InnoDB buffer pool free = ${percent_innodb_buffer_pool_free} %"
 
     else
@@ -1284,7 +1286,7 @@ function check_innodb_status()
       $MYSQL_COMMAND -s -e "SHOW /*!50000 ENGINE */ INNODB STATUS\G"
     fi
 
-    human_readable $innodb_buffer_pool_size innodb_buffer_pool_sizeHR
+    human_readable "$innodb_buffer_pool_size" innodb_buffer_pool_sizeHR
     cecho "Current innodb_buffer_pool_size = $innodb_buffer_pool_sizeHR $unit"
     cecho "Depending on how much space your innodb indexes take up it may be safe"
     cecho "to increase this value to up to 2 / 3 of total system memory"
@@ -1322,7 +1324,7 @@ total_memory_used () {
   fi
 
   # Unused
-  #     if [ $max_heap_table_size -le $tmp_table_size ] ; then
+  #     if [ "$max_heap_table_size" -le $tmp_table_size ] ; then
   #       effective_tmp_table_size=$max_heap_table_size
   #     else
   #       effective_tmp_table_size=$tmp_table_size
@@ -1333,24 +1335,24 @@ total_memory_used () {
   per_thread_max_buffers=$(echo "($read_buffer_size+$read_rnd_buffer_size+$sort_buffer_size+$thread_stack+$join_buffer_size+$binlog_cache_size)*$max_used_connections" | bc -l)
 
   mysql_variable \'innodb_buffer_pool_size\' innodb_buffer_pool_size
-  if [ -z $innodb_buffer_pool_size ] ; then
+  if [ -z "$innodb_buffer_pool_size" ] ; then
     innodb_buffer_pool_size=0
   fi
 
   mysql_variable \'innodb_additional_mem_pool_size\' innodb_additional_mem_pool_size
-  if [ -z $innodb_additional_mem_pool_size ] ; then
+  if [ -z "$innodb_additional_mem_pool_size" ] ; then
     innodb_additional_mem_pool_size=0
   fi
 
   mysql_variable \'innodb_log_buffer_size\' innodb_log_buffer_size
-  if [ -z $innodb_log_buffer_size ] ; then
+  if [ -z "$innodb_log_buffer_size" ] ; then
     innodb_log_buffer_size=0
   fi
 
   mysql_variable \'key_buffer_size\' key_buffer_size
 
   mysql_variable \'query_cache_size\' query_cache_size
-  if [ -z $query_cache_size ] ; then
+  if [ -z "$query_cache_size" ] ; then
     query_cache_size=0
   fi
 
@@ -1362,7 +1364,7 @@ total_memory_used () {
 
   pct_of_sys_mem=$(echo "scale=0; $total_memory*100/$physical_memory" | bc -l)
 
-  if [ $pct_of_sys_mem -gt 90 ] ; then
+  if [ "$pct_of_sys_mem" -gt 90 ] ; then
     txt_color=boldred
     error=1
   else
@@ -1370,19 +1372,19 @@ total_memory_used () {
     error=0
   fi
 
-  human_readable $max_memory max_memoryHR
+  human_readable "$max_memory"j max_memoryHR
   cecho "Max Memory Ever Allocated : $max_memoryHR $unit" $txt_color
-  human_readable $per_thread_buffers per_thread_buffersHR
+  human_readable "$per_thread_buffers" per_thread_buffersHR
   cecho "Configured Max Per-thread Buffers : $per_thread_buffersHR $unit" $txt_color
-  human_readable $global_buffers global_buffersHR
+  human_readable "$global_buffers" global_buffersHR
   cecho "Configured Max Global Buffers : $global_buffersHR $unit" $txt_color
-  human_readable $total_memory total_memoryHR
+  human_readable "$total_memory" total_memoryHR
   cecho "Configured Max Memory Limit : $total_memoryHR $unit" $txt_color
-  #       human_readable $effective_tmp_table_size effective_tmp_table_sizeHR
+  #       human_readable "$effective_tmp_table_size" effective_tmp_table_sizeHR
   #       cecho "Plus $effective_tmp_table_sizeHR $unit per temporary table created"
-  human_readable $physical_memory physical_memoryHR
+  human_readable "$physical_memory" physical_memoryHR
   cecho "Physical Memory : $physical_memoryHR $unit" $txt_color
-  if [ $error -eq 1 ] ; then
+  if [ "$error" -eq 1 ] ; then
     printf "\n"
     cecho "Max memory limit exceeds 90% of physical memory" $txt_color
   else
@@ -1430,7 +1432,7 @@ shared_info () {
   awk -F \. '{ printf "%02d", $1; printf "%02d", $2; printf "%02d", $3 }')
   mysql_status \'Questions\' questions
   #       socket_owner=$(find -L $socket -printf '%u\n')
-  socket_owner=$(ls -nH $socket | awk '{ print $3 }')
+  socket_owner=$(ls -nH "$socket" | awk '{ print $3 }')
 }
 
 
@@ -1523,7 +1525,7 @@ prompt () {
   read -rsp "Password [<none>] : " pass
   cecho " "
   read -p "Socket [ /var/lib/mysql/mysql.sock ] : " socket
-  if [ -z $socket ] ; then
+  if [ -z "$socket" ] ; then
     export socket='/var/lib/mysql/mysql.sock'
   fi
 
@@ -1541,7 +1543,7 @@ prompt () {
     exit 1
   fi
   read -p "Mode to test - banner, file, misc, mem, innodb, [all] : " REPLY
-  if [ -z $REPLY ] ; then
+  if [ -z "$REPLY" ] ; then
     REPLY='all'
   fi
   case $REPLY in
