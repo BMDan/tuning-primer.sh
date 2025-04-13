@@ -587,6 +587,27 @@ check_binary_log () {
 
         if [ "$log_bin" = 'ON' ] ; then
                 cecho "The binary update log is enabled"
+                # Handle deprecated expire_logs_days (MySQL < 8.0) and new binlog_expire_logs_seconds
+                expire_logs_days=$(mysql -Nse "SHOW VARIABLES LIKE 'expire_logs_days';" 2>/dev/null | awk '{ print $2 }')
+                binlog_expire_logs_seconds=$(mysql -Nse "SHOW VARIABLES LIKE 'binlog_expire_logs_seconds';" 2>/dev/null | awk '{ print $2 }')
+                
+                # If expire_logs_days is empty, try calculating it from seconds
+                if [ -z "$expire_logs_days" ] && [[ "$binlog_expire_logs_seconds" =~ ^[0-9]+$ ]]; then
+                    expire_logs_days=$((binlog_expire_logs_seconds / 86400))
+                fi
+                
+                # Clean decimal point if present
+                clean_expire_logs_days="${expire_logs_days//.}"
+                if [ -z "$clean_expire_logs_days" ]; then
+                    clean_expire_logs_days=0
+                fi
+                
+                # Evaluate the value safely
+                if [ "$clean_expire_logs_days" -eq 0 ]; then
+                    cecho "Binary logs are enabled, but will never expire. Consider setting expire_logs_days or binlog_expire_logs_seconds."
+                else
+                    cecho "Binary logs are enabled and expire after $expire_logs_days day(s)."
+                fi
                 if [ -z "$max_binlog_size" ] ; then
                         cecho "The max_binlog_size is not set. The binary log will rotate when it reaches 1GB." red
                 fi
