@@ -581,42 +581,29 @@ check_binary_log () {
 
         mysql_variable \'log_bin\' log_bin
         mysql_variable \'max_binlog_size\' max_binlog_size
+        # Handle deprecated expire_logs_days (MySQL < 8.0) and new binlog_expire_logs_seconds
         mysql_variable \'expire_logs_days\' expire_logs_days
+        mysql_variable \'binlog_expire_logs_seconds\' binlog_expire_logs_seconds
         mysql_variable \'sync_binlog\' sync_binlog
         #  mysql_variable \'max_binlog_cache_size\' max_binlog_cache_size
 
         if [ "$log_bin" = 'ON' ] ; then
                 cecho "The binary update log is enabled"
-                # Handle deprecated expire_logs_days (MySQL < 8.0) and new binlog_expire_logs_seconds
-                mysql_variable \'expire_logs_days\' expire_logs_days
-                mysql_variable \'binlog_expire_logs_seconds\' binlog_expire_logs_seconds
-                
+                if [ -z "$max_binlog_size" ] ; then
+                        cecho "The max_binlog_size is not set. The binary log will rotate when it reaches 1GB." red
+                fi
                 # If expire_logs_days is empty, try calculating it from seconds
                 if [ -z "$expire_logs_days" ] && [[ "$binlog_expire_logs_seconds" =~ ^[0-9]+$ ]]; then
                     expire_logs_days=$((binlog_expire_logs_seconds / 86400))
-                fi
-                
-                # Clean decimal point if present
-                clean_expire_logs_days="${expire_logs_days//.}"
-                if [ -z "$clean_expire_logs_days" ]; then
-                    clean_expire_logs_days=0
-                fi
-                
-                # Evaluate the value safely
-                if [ "$clean_expire_logs_days" -eq 0 ]; then
-                    cecho "Binary logs are enabled, but will never expire. Consider setting expire_logs_days or binlog_expire_logs_seconds."
-                else
-                    cecho "Binary logs are enabled and expire after $expire_logs_days day(s)."
-                fi
-                if [ -z "$max_binlog_size" ] ; then
-                        cecho "The max_binlog_size is not set. The binary log will rotate when it reaches 1GB." red
                 fi
                 if [ "${expire_logs_days//.}" -eq 0 ] ; then  # Turns 0.000 -> 0000.
                         cecho "The expire_logs_days is not set." boldred
                         cechon "The mysqld will retain the entire binary log until " red
                         cecho "RESET MASTER or PURGE MASTER LOGS commands are run manually" red
-                        cecho "Setting expire_logs_days will allow you to remove old binary logs automatically"  yellow
+                        cecho "Setting expire_logs_days or binlog_expire_logs_seconds will allow you to remove old binary logs automatically"  yellow
                         cecho "See http://dev.mysql.com/doc/refman/$major_version/en/purge-master-logs.html" yellow
+                else
+                        cecho "Binary logs are enabled and expire after $expire_logs_days day(s)."
                 fi
                 if [ "$sync_binlog" = 0 ] ; then
                         cecho "Binlog sync is not enabled, you could lose binlog records during a server crash" red
