@@ -588,8 +588,8 @@ check_binary_log () {
         if [ "$log_bin" = 'ON' ] ; then
                 cecho "The binary update log is enabled"
                 # Handle deprecated expire_logs_days (MySQL < 8.0) and new binlog_expire_logs_seconds
-                expire_logs_days=$(mysql -Nse "SHOW VARIABLES LIKE 'expire_logs_days';" 2>/dev/null | awk '{ print $2 }')
-                binlog_expire_logs_seconds=$(mysql -Nse "SHOW VARIABLES LIKE 'binlog_expire_logs_seconds';" 2>/dev/null | awk '{ print $2 }')
+                mysql_variable \'expire_logs_days\' expire_logs_days
+                mysql_variable \'binlog_expire_logs_seconds\' binlog_expire_logs_seconds
                 
                 # If expire_logs_days is empty, try calculating it from seconds
                 if [ -z "$expire_logs_days" ] && [[ "$binlog_expire_logs_seconds" =~ ^[0-9]+$ ]]; then
