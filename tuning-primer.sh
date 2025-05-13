@@ -602,7 +602,7 @@ check_binary_log () {
                         cecho "The expire_logs_days is not set." boldred
                         cechon "The mysqld will retain the entire binary log until " red
                         cecho "RESET MASTER or PURGE MASTER LOGS commands are run manually" red
-                        cecho "Setting expire_logs_days or binlog_expire_logs_seconds will allow you to remove old binary logs automatically"  yellow
+                        cecho "Setting $expire_logs_days_source will allow you to remove old binary logs automatically"  yellow
                         cecho "See http://dev.mysql.com/doc/refman/$major_version/en/purge-master-logs.html" yellow
                 else
                         if [ "$expire_logs_days_source" = "binlog_expire_logs_seconds" ]; then
