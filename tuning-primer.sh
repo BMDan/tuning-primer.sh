@@ -593,8 +593,10 @@ check_binary_log () {
                         cecho "The max_binlog_size is not set. The binary log will rotate when it reaches 1GB." red
                 fi
                 # If expire_logs_days is empty, try calculating it from seconds
+                expire_logs_days_source="expire_logs_days"
                 if [ -z "$expire_logs_days" ] && [[ "$binlog_expire_logs_seconds" =~ ^[0-9]+$ ]]; then
                     expire_logs_days=$((binlog_expire_logs_seconds / 86400))
+                    expire_logs_days_source="binlog_expire_logs_seconds"
                 fi
                 if [ "${expire_logs_days//.}" -eq 0 ] ; then  # Turns 0.000 -> 0000.
                         cecho "The expire_logs_days is not set." boldred
@@ -603,7 +605,11 @@ check_binary_log () {
                         cecho "Setting expire_logs_days or binlog_expire_logs_seconds will allow you to remove old binary logs automatically"  yellow
                         cecho "See http://dev.mysql.com/doc/refman/$major_version/en/purge-master-logs.html" yellow
                 else
-                        cecho "Binary logs are enabled and expire after $expire_logs_days day(s)."
+                        if [ "$expire_logs_days_source" = "binlog_expire_logs_seconds" ]; then
+                            cecho "Current binlog_expire_logs_seconds = $binlog_expire_logs_seconds sec"
+                        else
+                            cecho "Current expire_logs_days = $expire_logs_days day(s)."
+                        fi
                 fi
                 if [ "$sync_binlog" = 0 ] ; then
                         cecho "Binlog sync is not enabled, you could lose binlog records during a server crash" red
