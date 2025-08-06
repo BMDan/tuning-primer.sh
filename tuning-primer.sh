@@ -183,8 +183,8 @@ check_for_plesk_passwords () {
 ## -- Check for the existence of plesk and login using its credentials -- ##
 
   if [ -f /etc/psa/.psa.shadow ] ; then
-    MYSQL_COMMAND="mysql -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
-    MYSQLADMIN_COMMAND="mysqladmin -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+    MYSQL_COMMAND="${MYSQL_COMMAND} -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
+    MYSQLADMIN_COMMAND="${MYSQLADMIN_COMMAND} -S $socket -u admin -p$(cat /etc/psa/.psa.shadow)"
   fi
 }
 
@@ -248,8 +248,8 @@ function second_login_failed()
     read -rp "User: " user
     read -rsp "Password: " pass
 
-    export MYSQL_COMMAND="mysql"
-    export MYSQLADMIN_COMMAND="mysqladmin"
+    export MYSQL_COMMAND="${MYSQL_COMMAND}"
+    export MYSQLADMIN_COMMAND="${MYSQLADMIN_COMMAND}"
 
     ;;
     *)
@@ -298,8 +298,8 @@ function second_login_failed()
       local tempmycnf
       tempmycnf="$(mktemp)"
       write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
-      export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
-      export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
+      export MYSQL_COMMAND="${MYSQL_COMMAND} --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
+      export MYSQLADMIN_COMMAND="${MYSQLADMIN_COMMAND} --defaults-extra-file=$tempmycnf $MYSQL_COMMAND_PARAMS"
       final_login_attempt
       return 0
     fi
@@ -1393,8 +1393,16 @@ total_memory_used () {
 ## Required Functions  ## 
 
 login_validation () {
-        export MYSQL_COMMAND="mysql"
-        export MYSQLADMIN_COMMAND="mysqladmin"
+        if command -v mariadb 2>/dev/null >/dev/null; then
+                export MYSQL_COMMAND="mariadb"
+        else
+                export MYSQL_COMMAND="mysql"
+        fi
+        if command -v mariadb-admin 2>/dev/null >/dev/null; then
+                export MYSQLADMIN_COMMAND="mariadb-admin"
+        else
+                export MYSQLADMIN_COMMAND="mysqladmin"
+        fi
 
         if [ -n "${socket-}" ]; then
           # First, we look for a socket.  Then, we try to find old Plesk
@@ -1530,8 +1538,8 @@ prompt () {
         tempmycnf="$(mktemp)"
         write_mycnf "$tempmycnf" "$socket" "$user" "$pass"
 
-        export MYSQL_COMMAND="mysql --defaults-extra-file=$tempmycnf -u$user"
-        export MYSQLADMIN_COMMAND="mysqladmin --defaults-extra-file=$tempmycnf -u$user"
+        export MYSQL_COMMAND="${MYSQL_COMMAND} --defaults-extra-file=$tempmycnf -u$user"
+        export MYSQLADMIN_COMMAND="${MYSQLADMIN_COMMAND} --defaults-extra-file=$tempmycnf -u$user"
 
         check_for_socket || \
         check_mysql_login
