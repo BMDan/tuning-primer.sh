@@ -595,8 +595,12 @@ check_binary_log () {
                 # If expire_logs_days is empty, try calculating it from seconds
                 expire_logs_days_source="expire_logs_days"
                 if [ -z "$expire_logs_days" ] && [[ "$binlog_expire_logs_seconds" =~ ^[0-9]+$ ]]; then
-                    expire_logs_days=$((binlog_expire_logs_seconds / 86400))
-                    expire_logs_days_source="binlog_expire_logs_seconds"
+                        # Do some kind-of-icky quasi-integer/quasi-decimal bash math.  This will
+                        # falsely claim expire_logs_days == 0.00 if you have set BELS to 863 seconds
+                        # or less.  Then again, if you've done that, you're already living
+                        # dangerously, aren't you?
+                        expire_logs_days=$((binlog_expire_logs_seconds / 86400)).$((binlog_expire_logs_seconds * 10 / 86400 % 10))$((binlog_expire_logs_seconds * 100 / 86400 % 10))
+                        expire_logs_days_source="binlog_expire_logs_seconds"
                 fi
                 if [ "${expire_logs_days//.}" -eq 0 ] ; then  # Turns 0.000 -> 0000.
                         cecho "The expire_logs_days is not set." boldred
@@ -606,7 +610,7 @@ check_binary_log () {
                         cecho "See http://dev.mysql.com/doc/refman/$major_version/en/purge-master-logs.html" yellow
                 else
                         if [ "$expire_logs_days_source" = "binlog_expire_logs_seconds" ]; then
-                            cecho "Current binlog_expire_logs_seconds = $binlog_expire_logs_seconds sec"
+                            cecho "Current binlog_expire_logs_seconds = $binlog_expire_logs_seconds sec (${expire_logs_days} day(s))"
                         else
                             cecho "Current expire_logs_days = $expire_logs_days day(s)."
                         fi
