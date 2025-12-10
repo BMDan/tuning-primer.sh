@@ -10,17 +10,17 @@ repos:
         entry: bash -n
         files: \.sh$
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
+    rev: a30f0d816e5062a67d87c8de753cfe499672b959
     hooks:
       - id: remove-tabs
   - repo: https://github.com/lovesegfault/beautysh.git
-    rev: v6.2.1
+    rev: e5f49f023ed8a62696555bd7c06b90355f083d2d
     hooks:
       - id: beautysh
         args: [--indent-size,"2"]
         additional_dependencies: [setuptools]
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
+    rev: 2d496dbc18e31b83a1596685347ffe0b6041daf0
     hooks:
       - id: mdformat
         name: Format Markdown
@@ -31,7 +31,7 @@ repos:
         args: [--wrap, '75', --number]
         additional_dependencies: [mdformat-toc, mdformat-gfm]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c
     hooks:
       - id: no-commit-to-branch
         args: [--branch, dummy]
@@ -47,7 +47,7 @@ repos:
       - id: fix-byte-order-marker
       - id: check-case-conflict
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.36.0
+    rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7
     hooks:
       - id: yamllint
         args:
@@ -55,7 +55,7 @@ repos:
           - -d
           - '{extends: relaxed, rules: {line-length: {max: 120}}}'
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: 63c8f8312b7559622c0d82815639671ae42132ac
     hooks:
       - id: codespell
         exclude: (LICENSE)$
@@ -63,7 +63,7 @@ repos:
         # additional_dependencies:
         #  - tomli
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95
     hooks:
       - id: shellcheck
         files: ^[^\.].*\.sh$
