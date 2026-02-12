@@ -434,7 +434,7 @@ human_readable () {
     if [ -z "$3" ] ; then
       scale=0
     fi
-    divide "$1 "1048576 "$2" "$scale"
+    divide "$1" 1048576 "$2" "$scale"
     unit="M"
   elif [ "$1" -ge 1024 ] ; then
     if [ -z "$3" ] ; then
@@ -1390,7 +1390,7 @@ total_memory_used () {
     error=0
   fi
 
-  human_readable "$max_memory"j max_memoryHR
+  human_readable "$max_memory" max_memoryHR
   cecho "Max Memory Ever Allocated : $max_memoryHR $unit" $txt_color
   human_readable "$per_thread_buffers" per_thread_buffersHR
   cecho "Configured Max Per-thread Buffers : $per_thread_buffersHR $unit" $txt_color
@@ -1458,7 +1458,8 @@ shared_info () {
   awk -F \. '{ printf "%02d", $1; printf "%02d", $2; printf "%02d", $3 }')
   mysql_status \'Questions\' questions
   #       socket_owner=$(find -L $socket -printf '%u\n')
-  socket_owner=$(ls -nH "$socket" | awk '{ print $3 }')
+  socket_owner=''
+  [ -n "${socket}" ] && socket_owner=$(stat -Lc %u "$socket")
 }
 
 
